@@ -73,27 +73,27 @@ mod tests {
             ),
             (
                 "element_empty",
-                Node::Element(el("div")),
+                node(el("div")),
                 "<div></div>",
             ),
             (
                 "element_void",
-                Node::Element(el("br")),
+                node(el("br")),
                 "<br>",
             ),
             (
                 "element_with_text_child",
-                Node::Element(el("p").children(vec![text("hi")])),
+                node(el("p").children(vec![text("hi")])),
                 "<p>hi</p>",
             ),
             (
                 "element_with_attrs",
-                Node::Element(el("a").attrs(vec![attr("href").value("/")])),
+                node(el("a").attrs(vec![attr("href").value("/")])),
                 "<a href=\"/\"></a>",
             ),
             (
                 "nested_element_via_text",
-                Node::Element(el("div").children(vec![text("x")])),
+                node(el("div").children(vec![text("x")])),
                 "<div>x</div>",
             ),
         ];
