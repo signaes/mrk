@@ -1,60 +1,31 @@
-use crate::renderable::Renderable;
-
-enum Attr {
+#[derive(Debug)]
+pub enum AttributeType {
     KeyValue(&'static str, &'static str),
     Bool(&'static str),
 }
 
-impl Renderable for Attr {
-    fn render(&self) -> String {
-        match self {
-            Attr::KeyValue(k, v) => format!("{}=\"{}\"", k, v),
-            Attr::Bool(n) => n.to_string(),
-        }
-    }
-}
-
+#[derive(Debug)]
 pub struct Attribute {
-    key: &'static str,
-    attr: Attr,
+    pub key: &'static str,
+    pub attr: AttributeType,
 }
 
 impl Attribute {
-    fn new(k: &'static str) -> Self {
+    pub fn new(k: &'static str) -> Self {
         Attribute {
             key: k,
-            attr: Attr::Bool(k),
+            attr: AttributeType::Bool(k),
         }
     }
 
     pub fn value(mut self, v: &'static str) -> Self {
-        self.attr = Attr::KeyValue(self.key, v);
-
+        self.attr = AttributeType::KeyValue(self.key, v);
         self
     }
 }
 
-/// Creates an HTML attribute by name.
-///
-/// Boolean attribute by default (renders as just the name). Call
-/// `.value(...)` to set a key/value pair.
-///
-/// # Example
-///
-/// ```
-/// use mrk::*;
-///
-/// assert_eq!(attr("disabled").render(), "disabled");
-/// assert_eq!(attr("href").value("/").render(), "href=\"/\"");
-/// ```
 pub fn attr(k: &'static str) -> Attribute {
     Attribute::new(k)
-}
-
-impl Renderable for Attribute {
-    fn render(&self) -> String {
-        self.attr.render()
-    }
 }
 
 #[cfg(test)]
@@ -62,17 +33,38 @@ mod tests {
     use super::*;
 
     #[test]
-    fn render_table() {
-        let cases = [
-            (attr("class").value("container"), "class=\"container\""),
-            (attr("id").value("main"), "id=\"main\""),
-            (attr("data-x").value("a&b"), "data-x=\"a&b\""),
-            (attr("disabled"), "disabled"),
-            (attr("checked"), "checked"),
-        ];
+    fn builder_creates_keyvalue() {
+        let a = attr("href").value("/");
+        assert_eq!(a.key, "href");
+        assert!(matches!(a.attr, AttributeType::KeyValue("href", "/")));
+    }
 
-        for (input, expected) in cases {
-            assert_eq!(input.render(), expected);
-        }
+    #[test]
+    fn builder_creates_bool() {
+        let a = attr("disabled");
+        assert_eq!(a.key, "disabled");
+        assert!(matches!(a.attr, AttributeType::Bool("disabled")));
+    }
+
+    #[test]
+    fn struct_literal_construction() {
+        let a = Attribute {
+            key: "id",
+            attr: AttributeType::KeyValue("id", "main"),
+        };
+        assert_eq!(a.key, "id");
+    }
+
+    #[test]
+    fn direct_mutation() {
+        let mut a = Attribute::new("class");
+        a.attr = AttributeType::KeyValue("class", "container");
+        assert!(matches!(a.attr, AttributeType::KeyValue("class", "container")));
+    }
+
+    #[test]
+    fn debug_format() {
+        let a = attr("href").value("/");
+        let _ = format!("{:?}", a);
     }
 }

@@ -6,12 +6,8 @@
 /// ```
 /// use mrk::*;
 ///
-/// let html = div().children(nodes![
-///     "Hello, ",
-///     el("strong").children(nodes!["world"]),
-/// ]).render();
-///
-/// assert_eq!(html, "<div>Hello, <strong>world</strong></div>");
+/// let tree = el("p").children(nodes!["Hello, ", "world"]);
+/// assert_eq!(tree.children.len(), 2);
 /// ```
 #[macro_export]
 macro_rules! nodes {

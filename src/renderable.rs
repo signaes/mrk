@@ -23,6 +23,7 @@ pub trait Renderable {
 }
 
 /// Renders any [`Renderable`] type to its HTML string.
+#[allow(dead_code)]
 pub fn render(t: impl Renderable) -> String {
     t.render()
 }

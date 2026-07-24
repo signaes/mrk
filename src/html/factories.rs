@@ -1,6 +1,13 @@
+//! HTML tag factory functions.
+//!
+//! Each function returns an empty [`Element`] with the matching tag name.
+//! Use the builder methods `.attrs(...)` and `.children(...)` to populate.
+
+use crate::element::Element;
+
 macro_rules! factory {
     ($fn_name:ident, $tag:literal) => {
-        pub fn $fn_name() -> $crate::element::Element {
+        pub fn $fn_name() -> Element {
             $crate::element::el($tag)
         }
     };

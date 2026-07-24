@@ -1,13 +1,20 @@
 [package]
 name = "mrk"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
-description = "A small HTML builder library"
+description = "A minimal markup builder library"
 authors = ["Thiago Oliveira <thiago@signaes.com>"]
 license = "MIT"
 repository = "https://github.com/signaes/mrk"
 homepage = "https://github.com/signaes/mrk"
-keywords = ["html", "markup", "builder"]
+keywords = ["markup", "builder", "html"]
 categories = ["template-engine"]
 
+[features]
+default = []
+html = []
+
 [dependencies]
+
+[package.metadata.docs.rs]
+features = ["html"]

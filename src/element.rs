@@ -1,53 +1,15 @@
 use crate::attributes::Attribute;
-use crate::constants;
 use crate::node::Node;
-use crate::renderable::Renderable;
 
+#[derive(Debug)]
 pub struct Element {
-    name: &'static str,
-    attributes: Vec<Attribute>,
-    children: Vec<Node>,
-}
-
-impl Renderable for Element {
-    fn render(&self) -> String {
-        enum Context {
-            Void,
-            VoidWithAttrs,
-            WithoutAttrs,
-            WithAttrs,
-        }
-
-        fn join(items: Vec<String>, separator: &'static str) -> String {
-            items.join(separator)
-        }
-
-        let attributes = join(self.attributes.iter().map(|a| a.render()).collect(), " ");
-        let children = join(self.children.iter().map(|a| a.render()).collect(), "");
-        let is_void = constants::VOID_ELEMENTS.contains(&self.name);
-        let has_attrs = !attributes.is_empty();
-        let context = match (is_void, has_attrs) {
-            (true, true) => Context::VoidWithAttrs,
-            (true, false) => Context::Void,
-            (false, true) => Context::WithAttrs,
-            (false, false) => Context::WithoutAttrs,
-        };
-
-        match context {
-            Context::Void => format!("<{}>", self.name),
-            Context::VoidWithAttrs => format!("<{} {}>", self.name, attributes),
-            Context::WithoutAttrs => {
-                format!("<{}>{}</{}>", self.name, children, self.name)
-            }
-            Context::WithAttrs => {
-                format!("<{} {}>{}</{}>", self.name, attributes, children, self.name)
-            }
-        }
-    }
+    pub name: &'static str,
+    pub attributes: Vec<Attribute>,
+    pub children: Vec<Node>,
 }
 
 impl Element {
-    fn new(name: &'static str) -> Self {
+    pub fn new(name: &'static str) -> Self {
         Element {
             name,
             attributes: vec![],
@@ -62,18 +24,17 @@ impl Element {
     /// ```
     /// use mrk::*;
     ///
-    /// let html = el("a").attrs(vec![attr("href").value("/")]).render();
-    /// assert_eq!(html, "<a href=\"/\"></a>");
+    /// let e = el("a").attrs(vec![attr("href").value("/")]);
+    /// assert_eq!(e.attributes.len(), 1);
     /// ```
     pub fn attrs(mut self, attributes: Vec<Attribute>) -> Self {
         self.attributes = attributes;
-
         self
     }
 
     /// Sets the element's children, replacing any previously set.
     ///
-    /// Use the [`nodes!`] macro to build the children list with mixed
+    /// Use the `nodes!` macro to build the children list with mixed
     /// strings and elements:
     ///
     /// # Example
@@ -81,8 +42,8 @@ impl Element {
     /// ```
     /// use mrk::*;
     ///
-    /// let html = el("p").children(nodes!["hi"]).render();
-    /// assert_eq!(html, "<p>hi</p>");
+    /// let e = el("p").children(nodes!["hi"]);
+    /// assert_eq!(e.children.len(), 1);
     /// ```
     pub fn children(mut self, children: Vec<Node>) -> Self {
         self.children = children;
@@ -90,23 +51,6 @@ impl Element {
     }
 }
 
-impl std::fmt::Display for Element {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.render())
-    }
-}
-
-/// Creates an element with the given tag name.
-///
-/// For common tags, prefer the factory functions like [`div`](crate::div).
-///
-/// # Example
-///
-/// ```
-/// use mrk::*;
-///
-/// assert_eq!(el("span").children(nodes!["hi"]).render(), "<span>hi</span>");
-/// ```
 pub fn el(name: &'static str) -> Element {
     Element::new(name)
 }
@@ -115,75 +59,49 @@ pub fn el(name: &'static str) -> Element {
 mod tests {
     use super::*;
     use crate::attributes::attr;
-    use crate::node::Node;
-    use crate::renderable::render;
+    use crate::nodes;
 
     #[test]
-    fn render_table() {
-        let cases = [
-            ("void_no_attrs", el("br"), "<br>"),
-            (
-                "void_keyvalue_attr",
-                el("img").attrs(vec![attr("src").value("x.png")]),
-                "<img src=\"x.png\">",
-            ),
-            (
-                "void_bool_attr",
-                el("input").attrs(vec![attr("disabled")]),
-                "<input disabled>",
-            ),
-            (
-                "void_mixed_attrs_order",
-                el("input").attrs(vec![attr("type").value("text"), attr("disabled")]),
-                "<input type=\"text\" disabled>",
-            ),
-            ("non_void_empty", el("div"), "<div></div>"),
-            (
-                "non_void_text_child",
-                el("p").children(vec!["hello".into()]),
-                "<p>hello</p>",
-            ),
-            (
-                "non_void_attrs_no_children",
-                el("a").attrs(vec![attr("href").value("/")]),
-                "<a href=\"/\"></a>",
-            ),
-            (
-                "non_void_attrs_text_child",
-                el("a")
-                    .attrs(vec![attr("href").value("/")])
-                    .children(vec!["Home".into()]),
-                "<a href=\"/\">Home</a>",
-            ),
-            (
-                "non_void_multi_children",
-                el("ul").children(vec![
-                    Node::Element(el("li").children(vec!["a".into()])),
-                    Node::Element(el("li").children(vec!["b".into()])),
-                ]),
-                "<ul><li>a</li><li>b</li></ul>",
-            ),
-            (
-                "nested_one_level",
-                el("div").children(vec![Node::Element(el("span").children(vec!["x".into()]))]),
-                "<div><span>x</span></div>",
-            ),
-            (
-                "nested_three_levels",
-                el("div").children(vec![Node::Element(
-                    el("section").children(vec![Node::Element(el("p").children(vec!["x".into()]))]),
-                )]),
-                "<div><section><p>x</p></section></div>",
-            ),
-            (
-                "text_special_chars_unescaped",
-                el("p").children(vec!["a < b & c".into()]),
-                "<p>a < b & c</p>",
-            ),
-        ];
+    fn el_creates_empty_element() {
+        let e = el("div");
+        assert_eq!(e.name, "div");
+        assert!(e.attributes.is_empty());
+        assert!(e.children.is_empty());
+    }
 
-        for (name, element, expected) in cases {
-            assert_eq!(render(element), expected, "case: {name}");
-        }
+    #[test]
+    fn builder_chains() {
+        let e = el("a")
+            .attrs(vec![attr("href").value("/")])
+            .children(nodes!["Home"]);
+
+        assert_eq!(e.name, "a");
+        assert_eq!(e.attributes.len(), 1);
+        assert_eq!(e.children.len(), 1);
+    }
+
+    #[test]
+    fn struct_literal_construction() {
+        let e = Element {
+            name: "custom",
+            attributes: vec![],
+            children: vec![],
+        };
+        assert_eq!(e.name, "custom");
+    }
+
+    #[test]
+    fn direct_field_mutation() {
+        let mut e = el("div");
+        e.attributes.push(attr("class").value("container"));
+        e.children.push("Hello".into());
+        assert_eq!(e.attributes.len(), 1);
+        assert_eq!(e.children.len(), 1);
+    }
+
+    #[test]
+    fn debug_format() {
+        let e = el("div");
+        let _ = format!("{:?}", e);
     }
 }

@@ -1,20 +1,22 @@
 # mrk
 
-A minimal HTML builder library for Rust.
+A minimal markup builder library for Rust.
 
-`mrk` provides a fluent, type-safe API for constructing HTML. Create elements
-with `el`, attach attributes with `attr`, build children lists with the `nodes!`
-macro (mixing `&'static str`, `String`, and elements freely), then render to a
-string.
+`mrk` provides a fluent, type-safe API for building structured markup
+trees. Compose elements with `el`, attach attributes with `attr`, and
+build children lists with the `nodes!` macro.
 
 ## Installation
 
+By default, `mrk` provides the data model and builder API only. Enable
+a feature for built-in rendering:
+
 ```toml
 [dependencies]
-mrk = "0.1"
+mrk = { version = "0.3", features = ["html"] }
 ```
 
-## Quick start
+## Quick start (with `html` feature)
 
 ```rust
 use mrk::*;
@@ -27,10 +29,49 @@ let html = el("a")
 assert_eq!(html, r#"<a href="/">Home</a>"#);
 ```
 
-## Factories
+## Features
 
-For common HTML tags, use the factory functions (`div`, `p`, `span`, `ul`,
-`li`, `input`, ...):
+| Feature | Default | Description |
+|---|---|---|
+| `html` | no | HTML rendering, 116 tag factories, void elements, escaping |
+
+Without any feature, you can build trees but cannot render them. Implement
+`Renderable` for your own renderer, or enable a feature.
+
+## Building trees without rendering
+
+```rust
+use mrk::*;
+
+let tree = el("custom-tag")
+    .attrs(vec![attr("name").value("value")])
+    .children(nodes!["data"]);
+
+assert_eq!(tree.name, "custom-tag");
+```
+
+## Direct construction
+
+All struct fields are public. You can construct directly via struct literals:
+
+```rust
+use mrk::*;
+
+let div = Element {
+    name: "div",
+    attributes: vec![attr("class").value("container")],
+    children: vec![],
+};
+
+let a = Attribute {
+    key: "href",
+    attr: AttributeType::KeyValue("href", "/"),
+};
+```
+
+## Factories (with `html` feature)
+
+For common HTML tags, use the factory functions:
 
 ```rust
 use mrk::*;
@@ -39,47 +80,6 @@ let html = div().children(nodes![
     "Hello, ",
     el("strong").children(nodes!["world"]),
 ]).render();
-// "<div>Hello, <strong>world</strong></div>"
-```
-
-## Nested elements
-
-Strings and elements (from `el` or factories) compose freely inside
-`children(nodes![...])`:
-
-```rust
-use mrk::*;
-
-let html = ul().children(nodes![
-    el("li").children(nodes!["first"]),
-    el("li").children(nodes!["second"]),
-]).render();
-// "<ul><li>first</li><li>second</li></ul>"
-```
-
-## Runtime strings
-
-`String` values work directly in `nodes!` — useful for user input or computed
-content:
-
-```rust
-use mrk::*;
-
-let name = String::from("World");
-let html = p().children(nodes![format!("Hello, {}!", name)]).render();
-// "<p>Hello, World!</p>"
-```
-
-## Boolean and key-value attributes
-
-`attr(name)` produces a boolean attribute by default. Call `.value(...)` to
-turn it into a key/value pair:
-
-```rust
-use mrk::*;
-
-assert_eq!(attr("disabled").render(), "disabled");
-assert_eq!(attr("href").value("/").render(), "href=\"/\"");
 ```
 
 ## Implementing `Renderable`

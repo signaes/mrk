@@ -1,40 +1,39 @@
 //! # mrk
 //!
-//! A small HTML builder library for Rust.
+//! A minimal markup builder library for Rust.
 //!
-//! `mrk` lets you construct HTML with a fluent builder API: create elements
-//! with [`el`], attach attributes with [`attr`], build a children list with
-//! the [`nodes!`] macro (accepting strings and elements freely), then call
-//! `.render()` to produce an HTML string. For custom output, implement
-//! the [`Renderable`] trait.
+//! `mrk` provides a fluent, type-safe API for building structured markup
+//! trees. Compose elements with [`el`], attach attributes with [`attr`],
+//! and build children lists with the [`nodes!`] macro.
 //!
-//! ## Quick start
+//! ## Features
+//!
+//! By default, `mrk` provides only the data model and builder API. Enable
+//! a feature for built-in rendering:
+//!
+//! - `html` — HTML rendering, 116 tag factories, void elements, escaping
+//!
+//! ```toml
+//! [dependencies]
+//! mrk = { version = "0.3", features = ["html"] }
+//! ```
+//!
+//! ## Building trees without rendering
+//!
+//! Without any feature, `mrk` builds trees but doesn't render them:
 //!
 //! ```
 //! use mrk::*;
 //!
-//! let html = el("a")
-//!     .attrs(vec![attr("href").value("/")])
-//!     .children(nodes!["Home"])
-//!     .render();
+//! let tree = el("custom-tag")
+//!     .attrs(vec![attr("name").value("value")])
+//!     .children(nodes!["data"]);
 //!
-//! assert_eq!(html, r#"<a href="/">Home</a>"#);
+//! assert_eq!(tree.name, "custom-tag");
 //! ```
 //!
-//! ## Factories
-//!
-//! For common HTML tags, use the factory functions (e.g. [`div`], [`p`], [`span`]):
-//!
-//! ```
-//! use mrk::*;
-//!
-//! let html = div().children(nodes![
-//!     "Hello, ",
-//!     el("strong").children(nodes!["world"]),
-//! ]).render();
-//!
-//! assert_eq!(html, "<div>Hello, <strong>world</strong></div>");
-//! ```
+//! Implement [`Renderable`] for your own renderer, or enable a feature
+//! to use a built-in one.
 //!
 //! ## Extending with [`Renderable`]
 //!
@@ -55,15 +54,15 @@
 //! ```
 
 mod attributes;
-mod constants;
 mod element;
-mod elements;
 mod macros;
 mod node;
 mod renderable;
 
-pub use attributes::attr;
-pub use element::el;
-pub use elements::*;
+pub use attributes::{Attribute, AttributeType, attr};
+pub use element::{Element, el};
 pub use node::Node;
 pub use renderable::{Renderable, render};
+
+#[cfg(feature = "html")]
+pub mod html;
