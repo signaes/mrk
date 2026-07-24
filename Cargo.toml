@@ -1,0 +1,13 @@
+[package]
+name = "mrk"
+version = "0.1.0"
+edition = "2024"
+description = "A small HTML builder library"
+authors = ["Thiago Oliveira <thiago@signaes.com>"]
+license = "MIT"
+repository = "https://github.com/signaes/mrk"
+homepage = "https://github.com/signaes/mrk"
+keywords = ["html", "markup", "builder"]
+categories = ["template-engine"]
+
+[dependencies]
