@@ -3,9 +3,10 @@
 //! A small HTML builder library for Rust.
 //!
 //! `mrk` lets you construct HTML with a fluent builder API: create elements
-//! with [`el`], attach attributes with [`attr`], add children with [`text`] or
-//! nested elements wrapped via [`node`], then call `.render()` to produce an
-//! HTML string. For custom output, implement the [`Renderable`] trait.
+//! with [`el`], attach attributes with [`attr`], add children with the
+//! [`children!`] macro (mixing [`text`] and nested elements freely), then
+//! call `.render()` to produce an HTML string. For custom output, implement
+//! the [`Renderable`] trait.
 //!
 //! ## Quick start
 //!
@@ -14,7 +15,7 @@
 //!
 //! let html = el("a")
 //!     .attrs(vec![attr("href").value("/")])
-//!     .children(vec![text("Home")])
+//!     .children(children![text("Home")])
 //!     .render();
 //!
 //! assert_eq!(html, r#"<a href="/">Home</a>"#);
@@ -27,9 +28,9 @@
 //! ```
 //! use mrk::*;
 //!
-//! let html = div().children(vec![
+//! let html = div().children(children![
 //!     text("Hello, "),
-//!     node(el("strong").children(vec![text("world")])),
+//!     el("strong").children(children![text("world")]),
 //! ]).render();
 //!
 //! assert_eq!(html, "<div>Hello, <strong>world</strong></div>");
@@ -57,6 +58,7 @@ mod attributes;
 mod constants;
 mod element;
 mod elements;
+mod macros;
 mod node;
 mod renderable;
 

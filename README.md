@@ -3,8 +3,8 @@
 A minimal HTML builder library for Rust.
 
 `mrk` provides a fluent, type-safe API for constructing HTML. Create elements
-with `el`, attach attributes with `attr`, add children with `text` or nested
-elements, then render to a string.
+with `el`, attach attributes with `attr`, add children with the `children!`
+macro (mixing `text` and nested elements freely), then render to a string.
 
 ## Installation
 
@@ -20,7 +20,7 @@ use mrk::*;
 
 let html = el("a")
     .attrs(vec![attr("href").value("/")])
-    .children(vec![text("Home")])
+    .children(children![text("Home")])
     .render();
 
 assert_eq!(html, r#"<a href="/">Home</a>"#);
@@ -34,25 +34,24 @@ For common HTML tags, use the factory functions (`div`, `p`, `span`, `ul`,
 ```rust
 use mrk::*;
 
-let html = div().children(vec![
+let html = div().children(children![
     text("Hello, "),
-    node(el("strong").children(vec![text("world")])),
+    el("strong").children(children![text("world")]),
 ]).render();
 // "<div>Hello, <strong>world</strong></div>"
 ```
 
 ## Nested elements
 
-`text` and elements (from `el` or factories) compose inside
-`.children(vec![...])`. Use `node(...)` to wrap each element child so the
-vector is homogeneous:
+`text` and elements (from `el` or factories) compose freely inside
+`.children(children![...])` — element values are auto-wrapped as nodes:
 
 ```rust
 use mrk::*;
 
-let html = ul().children(vec![
-    node(el("li").children(vec![text("first")])),
-    node(el("li").children(vec![text("second")])),
+let html = ul().children(children![
+    el("li").children(children![text("first")]),
+    el("li").children(children![text("second")]),
 ]).render();
 // "<ul><li>first</li><li>second</li></ul>"
 ```

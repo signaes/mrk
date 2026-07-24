@@ -15,6 +15,12 @@ impl Renderable for Node {
     }
 }
 
+impl From<Element> for Node {
+    fn from(e: Element) -> Self {
+        Node::Element(e)
+    }
+}
+
 /// Creates a text node.
 ///
 /// # Example

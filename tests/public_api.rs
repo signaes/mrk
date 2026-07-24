@@ -4,9 +4,18 @@ use mrk::*;
 fn end_to_end_builder() {
     let html = el("a")
         .attrs(vec![attr("href").value("/")])
-        .children(vec![text("Home")])
+        .children(children![text("Home")])
         .render();
-    assert_eq!(html, "<a href=\"/\">Home</a>");
+    assert_eq!(html, r#"<a href="/">Home</a>"#);
+}
+
+#[test]
+fn children_macro_mixes_text_and_elements() {
+    let html = div().children(children![
+        text("Hello, "),
+        el("strong").children(children![text("world")]),
+    ]).render();
+    assert_eq!(html, "<div>Hello, <strong>world</strong></div>");
 }
 
 #[test]
