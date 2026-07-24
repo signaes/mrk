@@ -73,19 +73,26 @@ impl Element {
 
     /// Sets the element's children, replacing any previously set.
     ///
-    /// To mix element and text children, wrap each element in [`node`].
+    /// Use the [`nodes!`] macro to build the children list with mixed
+    /// strings and elements:
     ///
     /// # Example
     ///
     /// ```
     /// use mrk::*;
     ///
-    /// let html = el("p").children(vec![text("hi")]).render();
+    /// let html = el("p").children(nodes!["hi"]).render();
     /// assert_eq!(html, "<p>hi</p>");
     /// ```
     pub fn children(mut self, children: Vec<Node>) -> Self {
         self.children = children;
         self
+    }
+}
+
+impl std::fmt::Display for Element {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.render())
     }
 }
 
@@ -98,7 +105,7 @@ impl Element {
 /// ```
 /// use mrk::*;
 ///
-/// assert_eq!(el("span").children(vec![text("hi")]).render(), "<span>hi</span>");
+/// assert_eq!(el("span").children(nodes!["hi"]).render(), "<span>hi</span>");
 /// ```
 pub fn el(name: &'static str) -> Element {
     Element::new(name)
@@ -108,7 +115,7 @@ pub fn el(name: &'static str) -> Element {
 mod tests {
     use super::*;
     use crate::attributes::attr;
-    use crate::node::{Node, text};
+    use crate::node::Node;
     use crate::renderable::render;
 
     #[test]
@@ -133,7 +140,7 @@ mod tests {
             ("non_void_empty", el("div"), "<div></div>"),
             (
                 "non_void_text_child",
-                el("p").children(vec![text("hello")]),
+                el("p").children(vec!["hello".into()]),
                 "<p>hello</p>",
             ),
             (
@@ -145,32 +152,32 @@ mod tests {
                 "non_void_attrs_text_child",
                 el("a")
                     .attrs(vec![attr("href").value("/")])
-                    .children(vec![text("Home")]),
+                    .children(vec!["Home".into()]),
                 "<a href=\"/\">Home</a>",
             ),
             (
                 "non_void_multi_children",
                 el("ul").children(vec![
-                    Node::Element(el("li").children(vec![text("a")])),
-                    Node::Element(el("li").children(vec![text("b")])),
+                    Node::Element(el("li").children(vec!["a".into()])),
+                    Node::Element(el("li").children(vec!["b".into()])),
                 ]),
                 "<ul><li>a</li><li>b</li></ul>",
             ),
             (
                 "nested_one_level",
-                el("div").children(vec![Node::Element(el("span").children(vec![text("x")]))]),
+                el("div").children(vec![Node::Element(el("span").children(vec!["x".into()]))]),
                 "<div><span>x</span></div>",
             ),
             (
                 "nested_three_levels",
                 el("div").children(vec![Node::Element(
-                    el("section").children(vec![Node::Element(el("p").children(vec![text("x")]))]),
+                    el("section").children(vec![Node::Element(el("p").children(vec!["x".into()]))]),
                 )]),
                 "<div><section><p>x</p></section></div>",
             ),
             (
                 "text_special_chars_unescaped",
-                el("p").children(vec![text("a < b & c")]),
+                el("p").children(vec!["a < b & c".into()]),
                 "<p>a < b & c</p>",
             ),
         ];

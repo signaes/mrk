@@ -1,21 +1,20 @@
-/// Builds a `Vec<Node>` for use with `.children(...)`, accepting any mix of
-/// `text(...)` and `el(...)` / factory results. Element values are auto-wrapped
-/// as nodes.
+/// Builds a `Vec<Node>` for use with `.children(...)`. Accepts `&'static str`,
+/// `String`, and any element value (from `el(...)` or a factory).
 ///
 /// # Example
 ///
 /// ```
 /// use mrk::*;
 ///
-/// let html = div().children(children![
-///     text("Hello, "),
-///     el("strong").children(children![text("world")]),
+/// let html = div().children(nodes![
+///     "Hello, ",
+///     el("strong").children(nodes!["world"]),
 /// ]).render();
 ///
 /// assert_eq!(html, "<div>Hello, <strong>world</strong></div>");
 /// ```
 #[macro_export]
-macro_rules! children {
+macro_rules! nodes {
     () => {
         ::std::vec::Vec::<$crate::Node>::new()
     };

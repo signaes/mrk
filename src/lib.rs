@@ -3,9 +3,9 @@
 //! A small HTML builder library for Rust.
 //!
 //! `mrk` lets you construct HTML with a fluent builder API: create elements
-//! with [`el`], attach attributes with [`attr`], add children with the
-//! [`children!`] macro (mixing [`text`] and nested elements freely), then
-//! call `.render()` to produce an HTML string. For custom output, implement
+//! with [`el`], attach attributes with [`attr`], build a children list with
+//! the [`nodes!`] macro (accepting strings and elements freely), then call
+//! `.render()` to produce an HTML string. For custom output, implement
 //! the [`Renderable`] trait.
 //!
 //! ## Quick start
@@ -15,7 +15,7 @@
 //!
 //! let html = el("a")
 //!     .attrs(vec![attr("href").value("/")])
-//!     .children(children![text("Home")])
+//!     .children(nodes!["Home"])
 //!     .render();
 //!
 //! assert_eq!(html, r#"<a href="/">Home</a>"#);
@@ -28,9 +28,9 @@
 //! ```
 //! use mrk::*;
 //!
-//! let html = div().children(children![
-//!     text("Hello, "),
-//!     el("strong").children(children![text("world")]),
+//! let html = div().children(nodes![
+//!     "Hello, ",
+//!     el("strong").children(nodes!["world"]),
 //! ]).render();
 //!
 //! assert_eq!(html, "<div>Hello, <strong>world</strong></div>");
@@ -65,5 +65,5 @@ mod renderable;
 pub use attributes::attr;
 pub use element::el;
 pub use elements::*;
-pub use node::{node, text, Node};
+pub use node::Node;
 pub use renderable::{Renderable, render};
