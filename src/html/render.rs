@@ -63,6 +63,7 @@ impl Renderable for Node {
         match self {
             Node::Text(s) => escape(s.as_ref()),
             Node::Element(e) => e.render(),
+            Node::Raw(s) => s.as_ref().to_string(),
         }
     }
 }

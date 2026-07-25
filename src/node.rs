@@ -3,8 +3,15 @@ use std::borrow::Cow;
 
 #[derive(Debug)]
 pub enum Node {
+    /// Escaped text content. Special HTML chars (`<`, `>`, `&`, `"`) are
+    /// replaced with their entity equivalents when rendered.
     Text(Cow<'static, str>),
+    /// A child element.
     Element(Element),
+    /// Raw, unescaped HTML content — rendered as-is. Use only for trusted
+    /// input (e.g., pre-built HTML from a markdown library). Construct via
+    /// `Raw::str(...)` or `Raw::string(...)` (in the `html` module).
+    Raw(Cow<'static, str>),
 }
 
 impl From<&'static str> for Node {
