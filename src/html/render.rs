@@ -18,6 +18,20 @@ fn join(items: Vec<String>, separator: &'static str) -> String {
     items.join(separator)
 }
 
+/// Escape HTML special characters in text content or attribute values.
+/// Replaces `&`, `<`, `>`, `"` with their entity equivalents.
+fn escape(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    s.chars().for_each(|c| match c {
+        '&' => out.push_str("&amp;"),
+        '<' => out.push_str("&lt;"),
+        '>' => out.push_str("&gt;"),
+        '"' => out.push_str("&quot;"),
+        _ => out.push(c),
+    });
+    out
+}
+
 impl Renderable for Element {
     fn render(&self) -> String {
         let attributes = join(self.attributes.iter().map(|a| a.render()).collect(), " ");
@@ -47,7 +61,7 @@ impl Renderable for Element {
 impl Renderable for Node {
     fn render(&self) -> String {
         match self {
-            Node::Text(s) => s.as_ref().to_string(),
+            Node::Text(s) => escape(s.as_ref()),
             Node::Element(e) => e.render(),
         }
     }
@@ -56,7 +70,7 @@ impl Renderable for Node {
 impl Renderable for Attribute {
     fn render(&self) -> String {
         match self.attr {
-            AttributeType::KeyValue(k, v) => format!("{}=\"{}\"", k, v),
+            AttributeType::KeyValue(k, v) => format!("{}=\"{}\"", k, escape(v)),
             AttributeType::Bool(k) => k.to_string(),
         }
     }
@@ -91,7 +105,7 @@ mod tests {
         let cases = [
             (attr("class").value("container"), "class=\"container\""),
             (attr("id").value("main"), "id=\"main\""),
-            (attr("data-x").value("a&b"), "data-x=\"a&b\""),
+            (attr("data-x").value("a&b"), "data-x=\"a&amp;b\""),
             (attr("disabled"), "disabled"),
             (attr("checked"), "checked"),
         ];
@@ -152,5 +166,44 @@ mod tests {
 
         let a = attr("href").value("/");
         assert_eq!(format!("{}", a), "href=\"/\"");
+    }
+
+    #[test]
+    fn escapes_text_content() {
+        let html = el("p").children(vec!["a < b & c".into()]).render();
+        assert_eq!(html, "<p>a &lt; b &amp; c</p>");
+    }
+
+    #[test]
+    fn escapes_attribute_value_ampersand() {
+        let a = attr("title").value("Tom & Jerry");
+        assert_eq!(a.render(), "title=\"Tom &amp; Jerry\"");
+    }
+
+    #[test]
+    fn escapes_attribute_value_quotes() {
+        let a = attr("title").value("she said \"hi\"");
+        assert_eq!(a.render(), "title=\"she said &quot;hi&quot;\"");
+    }
+
+    #[test]
+    fn escapes_angle_brackets_in_text() {
+        let n: Node = "<script>alert(1)</script>".into();
+        assert_eq!(
+            n.render(),
+            "&lt;script&gt;alert(1)&lt;/script&gt;"
+        );
+    }
+
+    #[test]
+    fn does_not_double_escape() {
+        let n: Node = "&lt;".into();
+        assert_eq!(n.render(), "&amp;lt;");
+    }
+
+    #[test]
+    fn preserves_safe_text() {
+        let n: Node = "hello world".into();
+        assert_eq!(n.render(), "hello world");
     }
 }
