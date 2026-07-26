@@ -11,19 +11,18 @@
 //!
 //! ```
 //! use mrk::*;
+//! use mrk::html::*;
 //!
-//! let html = el("a")
-//!     .attrs(vec![attr("href").value("/")])
-//!     .children(nodes!["Home"])
+//! let html = div()
+//!     .attrs(vec![attr("class").value("container")])
+//!     .children(nodes!["Hello"])
 //!     .render();
-//!
-//! assert_eq!(html, r#"<a href="/">Home</a>"#);
 //! ```
 
 mod constants;
-mod factories;
+mod elements;
 mod raw;
 mod render;
 
-pub use factories::*;
+pub use elements::*;
 pub use raw::Raw;

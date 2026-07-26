@@ -70,8 +70,8 @@ impl Renderable for Node {
 
 impl Renderable for Attribute {
     fn render(&self) -> String {
-        match self.attr {
-            AttributeType::KeyValue(k, v) => format!("{}=\"{}\"", k, escape(v)),
+        match &self.attr {
+            AttributeType::KeyValue(k, v) => format!("{}=\"{}\"", k, escape(v.as_ref())),
             AttributeType::Bool(k) => k.to_string(),
         }
     }

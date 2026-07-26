@@ -1,6 +1,6 @@
 [package]
 name = "mrk"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 description = "A minimal markup builder library"
 authors = ["Thiago Oliveira <thiago@signaes.com>"]
