@@ -23,6 +23,7 @@ use std::borrow::Cow;
 
 use crate::attributes::{Attribute, AttributeType};
 use crate::components::{Component, Expr, MatchArm};
+use crate::components::WrappedAttribute;
 use crate::element::Element;
 use crate::node::Node;
 
@@ -451,8 +452,8 @@ impl<'a> Parser<'a> {
                             line: attr_line.line_no,
                         });
                     }
-                    let attr = self.parse_attr(attr_parsed, attr_line.line_no)?;
-                    attributes.push(attr);
+                    let wa = self.parse_wrapped_attr(attr_parsed, attr_line.line_no)?;
+                    attributes.push(wa);
                 }
 
                 let mut body = Vec::with_capacity(body_count);
@@ -503,7 +504,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parse a single attribute line (`A` or `B`).
-    fn parse_attr(
+    pub(crate) fn parse_attr(
         &mut self,
         first: Line<'a>,
         line_no: usize,
@@ -526,6 +527,42 @@ impl<'a> Parser<'a> {
                     key: Cow::Owned(k_str.clone()),
                     attr: AttributeType::Bool(Cow::Owned(k_str)),
                 })
+            }
+            other => Err(ParseError::UnknownToken {
+                line: line_no,
+                got: other,
+            }),
+        }
+    }
+
+    /// Parse a wrapped attribute line for `Expr::Wrap`: `A`, `B`, or `D`.
+    ///
+    /// `A`/`B` produce [`WrappedAttribute::Static`]; `D` produces
+    /// [`WrappedAttribute::Dynamic`] with the following expression at
+    /// `indent + 2`.
+    fn parse_wrapped_attr(
+        &mut self,
+        first: Line<'a>,
+        line_no: usize,
+    ) -> Result<WrappedAttribute, ParseError> {
+        match first.kind {
+            b'A' | b'B' => {
+                let attr = self.parse_attr(first, line_no)?;
+                Ok(WrappedAttribute::Static(attr))
+            }
+            b'D' => {
+                let k = field_payload(first.rest, 0, line_no)?;
+                let k_str = bytes_to_string(k, line_no)?;
+
+                let expr_line = self.scan_line().ok_or(ParseError::UnexpectedEof)?;
+                let expr_parsed = parse_line(expr_line.bytes);
+                if expr_parsed.indent != first.indent + 2 {
+                    return Err(ParseError::BadNesting {
+                        line: expr_line.line_no,
+                    });
+                }
+                let expr = self.parse_expr(expr_parsed, expr_line.line_no)?;
+                Ok(WrappedAttribute::Dynamic(Cow::Owned(k_str), expr))
             }
             other => Err(ParseError::UnknownToken {
                 line: line_no,

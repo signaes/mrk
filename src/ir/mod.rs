@@ -71,3 +71,8 @@ mod parser;
 
 pub use error::{ParseError, MAX_PAYLOAD};
 pub use mrk::Mrk;
+
+#[cfg(test)]
+pub(crate) use line::parse_line;
+#[cfg(test)]
+pub(crate) use parser::Parser;

@@ -50,6 +50,15 @@ macro_rules! __builder_methods {
             use crate::renderable::Renderable;
             self.0.render()
         }
+        /// Add an arbitrary key-value attribute.
+        pub fn attr(self, name: &'static str, value: &'static str) -> Self {
+            Self(self.0.push_attr(crate::attributes::attr(name).value(value)))
+        }
+        /// Add a `data-*` attribute.
+        pub fn data_attr(self, key: &'static str, value: &'static str) -> Self {
+            let name = std::borrow::Cow::Owned(format!("data-{}", key));
+            Self(self.0.push_attr(crate::attributes::Attribute::new(name).value(value)))
+        }
     };
 }
 pub(crate) use __builder_methods;
@@ -238,13 +247,6 @@ macro_rules! __common_globals_methods {
             Self(
                 self.0
                     .attrs(vec![crate::attributes::attr("form").value(value)]),
-            )
-        }
-        /// Custom data attribute (`data-*`).
-        pub fn data_x(self, value: &'static str) -> Self {
-            Self(
-                self.0
-                    .attrs(vec![crate::attributes::attr("data-x").value(value)]),
             )
         }
         /// Datalist reference (global `list`).
@@ -729,7 +731,6 @@ pub(crate) fn attr_name(ident: &str) -> &'static str {
         "part" => "part",
         "inputmode" => "inputmode",
         "enterkeyhint" => "enterkeyhint",
-        "data_x" => "data-x",
         "is_content" => "is",
 
         // ---- Plain names used as-is ----
@@ -848,6 +849,20 @@ mod tests {
     }
 
     #[test]
+    fn svg_builder_attr_adds_arbitrary() {
+        let el = TestCircle::new().attr("data-test", "value");
+        assert_eq!(el.0.attributes.len(), 1);
+        assert_eq!(el.0.attributes[0].key, "data-test");
+    }
+
+    #[test]
+    fn svg_builder_data_attr_adds_prefix() {
+        let el = TestCircle::new().data_attr("id", "btn");
+        assert_eq!(el.0.attributes.len(), 1);
+        assert_eq!(el.0.attributes[0].key, "data-id");
+    }
+
+    #[test]
     #[should_panic(expected = "unmapped identifier")]
     fn svg_attr_name_unmapped_identifier_panics() {
         super::attr_name("not_in_table");
@@ -881,7 +896,7 @@ mod tests {
             .is_content("x")
             .autofocus_global("true")
             .form_global("f")
-            .data_x("d")
+            .data_attr("x", "d")
             .list_global("l")
             .autocomplete_global("on")
             .aria_label("l")
@@ -1248,7 +1263,6 @@ mod tests {
             "part",
             "inputmode",
             "enterkeyhint",
-            "data_x",
             "is_content",
             // Suffix variants of conflicting names.
             "tabindex_global",

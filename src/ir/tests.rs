@@ -710,12 +710,12 @@ fn component_expr_w_missing_body_count_field() {
 
 #[test]
 fn round_trip_w_with_bool_attribute() {
-    use crate::components::Expr;
+    use crate::components::{Expr, WrappedAttribute};
     let c = component(
         "c",
         Expr::Wrap {
             name: "div".into(),
-            attrs: vec![attr("checked")],
+            attrs: vec![WrappedAttribute::Static(attr("checked"))],
             body: vec![],
         },
     );
@@ -1315,6 +1315,22 @@ fn component_attr_unknown_kind() {
 }
 
 // =================================================================
+// D-wrapped-attr error paths in parse_wrapped_attr.
+// =================================================================
+
+#[test]
+fn wrap_d_attr_bad_nesting() {
+    // D at indent 4 → expression must be at indent 6.
+    // Placing it at indent 2 triggers BadNesting.
+    let err = Mrk::from_string_component(
+        "mrk1\nC 5:greet\n  W 3:div 1:1 0:\n    D 5:class\n  P name\n",
+    )
+    .unwrap_err();
+    let is_bad = matches!(err, ParseError::BadNesting { .. });
+    assert!(is_bad);
+}
+
+// =================================================================
 // Round-trip coverage for the encode_node Raw / Element variants.
 // =================================================================
 
@@ -1376,4 +1392,55 @@ fn round_trip_n_expr_with_raw_and_element() {
     let bytes = Mrk::bytes_component(&c);
     let back = Mrk::from_bytes_component(&bytes).expect("decode");
     assert_eq!(c, back);
+}
+
+#[test]
+fn wrap_d_attr_field_payload_error() {
+    let err = Mrk::from_string_component(
+        "mrk1\nC 5:greet\n  W 3:div 1:1 0:\n    D bad\n",
+    )
+    .unwrap_err();
+    let is_bad = matches!(err, ParseError::BadLengthPrefix { .. });
+    assert!(is_bad);
+}
+
+#[test]
+fn wrap_d_attr_bytes_to_string_non_utf8() {
+    let mut ir = Vec::new();
+    ir.extend_from_slice(b"mrk1\nC 4:test\n  W 3:div 1:1 0:\n    D 3:");
+    ir.extend_from_slice(&[0xff, 0xfe, 0xfd]);
+    ir.push(b'\n');
+    let err = Mrk::from_bytes_component(&ir).unwrap_err();
+    eprintln!("non_utf8 got: {:?}", err);
+    let is_bad = matches!(err, ParseError::BadLengthPrefix { .. });
+    assert!(is_bad);
+}
+
+#[test]
+fn wrap_d_attr_eof_after_key() {
+    let err = Mrk::from_string_component(
+        "mrk1\nC 4:test\n  W 3:div 1:1 0:\n    D 3:foo\n",
+    )
+    .unwrap_err();
+    eprintln!("got: {:?}", err);
+    let is_eof = matches!(err, ParseError::UnexpectedEof);
+    assert!(is_eof);
+}
+
+#[test]
+fn wrap_d_attr_expr_parse_error() {
+    let err = Mrk::from_string_component(
+        "mrk1\nC 4:test\n  W 3:div 1:1 0:\n    D 3:foo\n      Z 3:bar\n",
+    )
+    .unwrap_err();
+    let is_unknown = matches!(err, ParseError::UnknownToken { .. });
+    assert!(is_unknown);
+}
+
+#[test]
+fn parse_attr_unknown_token() {
+    let mut parser = crate::ir::Parser::new(b"");
+    let line = crate::ir::parse_line(b"Z 3:foo");
+    let result = parser.parse_attr(line, 1);
+    assert!(matches!(result, Err(ParseError::UnknownToken { .. })));
 }

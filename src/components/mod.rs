@@ -46,22 +46,27 @@
 //! See [`crate::ir`] for the wire-format codec that round-trips a
 //! [`Component`] and back.
 
+mod comp_macro;
+mod ctx;
 mod expr;
 mod props;
 
 use std::borrow::Cow;
 use std::fmt;
 
+use crate::attributes::{Attribute, AttributeType};
 use crate::element::Element;
 use crate::node::Node;
+use crate::renderable::Renderable;
 
+pub use ctx::{ExprCtx, MatchEntry, Otherwise};
 pub use expr::{arm, component, either, list_expr, literal, map, match_on, maybe, prop, wrap};
 pub use props::{Number, NumberKind, PropType, Props};
 
 // Re-export the expression-tree public API at the crate root.
 // Done here (rather than via `pub use expr::…`) so the doc-pointers
 // resolve against the crate-root level.
-pub use expr::{Expr, IntoExpr, MatchArm};
+pub use expr::{Expr, IntoExpr, MatchArm, WrappedAttribute};
 
 // =====================================================================
 // Component
@@ -89,6 +94,43 @@ impl Component {
     /// typing (`Match`, `Either`, `Maybe`, `Map`).
     pub fn render(&self, props: &Props) -> Result<Vec<Node>, RenderError> {
         render_expr(&self.expr, props)
+    }
+
+    /// Build a `Component` from a closure over [`ExprCtx`].
+    ///
+    /// The closure runs once at build time, producing a plain [`Expr`]
+    /// tree. No closures, no `Fn` types, no opaque values remain on
+    /// the resulting `Component` — it is fully serializable via the
+    /// `.mrk` wire format (see [`crate::ir::Mrk`]).
+    ///
+    /// `R` is any type that converts into [`Expr`] ( [`Expr`]
+    /// itself, [`Element`], [`Node`], `Box<Expr>`, etc.).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use mrk::*;
+    /// use mrk::components::ExprCtx;
+    ///
+    /// let card = Component::build("card", |ctx| ctx.wrap(
+    ///     Element::new("div"),
+    ///     list![ctx.prop("name")],
+    /// ));
+    ///
+    /// let mut props = Props::new();
+    /// props.insert("name", PropType::String("Alice".into()));
+    /// let nodes = card.render(&props).unwrap();
+    /// assert_eq!(nodes.len(), 1);
+    /// ```
+    pub fn build<R: Into<Expr>>(
+        name: impl Into<Cow<'static, str>>,
+        build: impl FnOnce(ExprCtx) -> R,
+    ) -> Component {
+        let expr = build(ExprCtx).into();
+        Component {
+            name: name.into(),
+            expr,
+        }
     }
 }
 
@@ -210,10 +252,35 @@ fn render_expr(expr: &Expr, props: &Props) -> Result<Vec<Node>, RenderError> {
             for c in body {
                 children.extend(render_expr(c, props)?);
             }
+            let mut resolved_attrs = Vec::with_capacity(attrs.len());
+            for wa in attrs {
+                match wa {
+                    expr::WrappedAttribute::Static(a) => {
+                        resolved_attrs.push(a.clone());
+                    }
+                    expr::WrappedAttribute::Dynamic(key, expr) => {
+                        let nodes = render_expr(expr, props)?;
+                        let value: Cow<'static, str> = match nodes.as_slice() {
+                            [Node::Text(t)] => t.clone(),
+                            _ => {
+                                let s: String = nodes
+                                    .iter()
+                                    .map(|n| n.render())
+                                    .collect();
+                                Cow::Owned(s)
+                            }
+                        };
+                        resolved_attrs.push(Attribute {
+                            key: key.clone(),
+                            attr: AttributeType::KeyValue(key.clone(), value),
+                        });
+                    }
+                }
+            }
             Ok(vec![Node::Element(
                 Element {
                     name: name.clone(),
-                    attributes: attrs.clone(),
+                    attributes: resolved_attrs,
                     children,
                 },
             )])

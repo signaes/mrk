@@ -40,6 +40,36 @@ impl Props {
     pub fn len(&self) -> usize {
         self.0.len()
     }
+
+    /// Merge with `defaults`: start from `defaults`, then overlay
+    /// every entry in `self`. Caller wins on key collisions.
+    ///
+    /// Neither input is mutated; a fresh `Props` is returned.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use mrk::*;
+    ///
+    /// let mut fallbacks = Props::new();
+    /// fallbacks.insert("color", PropType::String("blue".into()));
+    ///
+    /// let mut caller = Props::new();
+    /// caller.insert("color", PropType::String("red".into()));
+    ///
+    /// let merged = caller.defaults(&fallbacks);
+    /// assert_eq!(
+    ///     merged.get("color"),
+    ///     Some(&PropType::String("red".into())),
+    /// );
+    /// ```
+    pub fn defaults(&self, defaults: &Props) -> Props {
+        let mut out = defaults.0.clone();
+        for (k, v) in &self.0 {
+            out.insert(k.clone(), v.clone());
+        }
+        Props(out)
+    }
 }
 
 impl From<HashMap<Cow<'static, str>, PropType>> for Props {

@@ -61,7 +61,7 @@ mod tests {
             .contenteditable("true").nonce_global("a").slot("s").part("p")
             .inputmode("text").enterkeyhint("enter").popover("auto")
             .is_content("x").autofocus_global("true").form_global("f")
-            .data_x("d").list_global("l").autocomplete_global("on")
+            .data_attr("x", "d").list_global("l").autocomplete_global("on")
             .aria_label("l").aria_hidden("t").aria_role("b").aria_live("p")
             .aria_expanded("f").aria_selected("t")
             .onclick("1").onchange("1").oninput("1").onsubmit("1")

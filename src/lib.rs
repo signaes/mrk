@@ -61,8 +61,9 @@ pub mod components;
 #[doc(inline)]
 #[cfg(feature = "components")]
 pub use components::{
-    Component, Expr, IntoExpr, MatchArm, Number, NumberKind, PropType, Props, RenderError, arm,
-    component, either, list_expr, literal, map, match_on, maybe, prop, wrap,
+    Component, Expr, ExprCtx, IntoExpr, MatchArm, MatchEntry, Number, NumberKind, Otherwise,
+    PropType, Props, RenderError, WrappedAttribute, arm, component, either, list_expr, literal,
+    map, match_on, maybe, prop, wrap,
 };
 
 /// The `.mrk` wire format: encode/decode a [`Component`] to bytes or

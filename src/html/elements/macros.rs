@@ -73,6 +73,15 @@ macro_rules! __builder_methods {
             use crate::renderable::Renderable;
             self.0.render()
         }
+        /// Add an arbitrary key-value attribute.
+        pub fn attr(self, name: &'static str, value: &'static str) -> Self {
+            Self(self.0.push_attr(crate::attributes::attr(name).value(value)))
+        }
+        /// Add a `data-*` attribute.
+        pub fn data_attr(self, key: &'static str, value: &'static str) -> Self {
+            let name = std::borrow::Cow::Owned(format!("data-{}", key));
+            Self(self.0.push_attr(crate::attributes::Attribute::new(name).value(value)))
+        }
     };
 }
 pub(crate) use __builder_methods;
@@ -261,13 +270,6 @@ macro_rules! __common_globals_methods {
             Self(
                 self.0
                     .attrs(vec![crate::attributes::attr("form").value(value)]),
-            )
-        }
-        /// Custom data attribute (`data-*`).
-        pub fn data_x(self, value: &'static str) -> Self {
-            Self(
-                self.0
-                    .attrs(vec![crate::attributes::attr("data-x").value(value)]),
             )
         }
         /// Datalist reference (global `list`).
@@ -738,7 +740,6 @@ pub(crate) fn attr_name(ident: &str) -> &'static str {
         "inputmode" => "inputmode",
         "enterkeyhint" => "enterkeyhint",
         "popover" => "popover",
-        "data_x" => "data-x",
         "is_content" => "is",
         other => panic!("attr_name: unmapped identifier '{other}'"),
     }
@@ -757,8 +758,6 @@ pub(crate) use factory;
 
 #[cfg(test)]
 mod tests {
-    use crate::renderable::Renderable;
-
     super::define_html_element!(TestDiv, "div", all);
     super::define_html_element!(
         TestAnchor,
@@ -801,6 +800,33 @@ mod tests {
     fn global_id_method_emits_id_attribute() {
         let el = TestDiv::new().id("main");
         assert_eq!(el.0.attributes[0].key, "id");
+    }
+
+    #[test]
+    fn builder_attr_adds_arbitrary_attribute() {
+        let el = TestDiv::new().attr("data-test", "value");
+        assert_eq!(el.0.attributes.len(), 1);
+        assert_eq!(el.0.attributes[0].key, "data-test");
+        assert_eq!(el.0.attributes[0].attr, crate::attributes::AttributeType::KeyValue("data-test".into(), "value".into()));
+    }
+
+    #[test]
+    fn builder_data_attr_adds_data_prefix() {
+        let el = TestDiv::new().data_attr("id", "btn");
+        assert_eq!(el.0.attributes.len(), 1);
+        assert_eq!(el.0.attributes[0].key, "data-id");
+    }
+
+    #[test]
+    fn builder_attr_chain_preserves_order() {
+        let el = TestDiv::new()
+            .attr("first", "1")
+            .id("main")
+            .attr("second", "2");
+        assert_eq!(el.0.attributes.len(), 3);
+        assert_eq!(el.0.attributes[0].key, "first");
+        assert_eq!(el.0.attributes[1].key, "id");
+        assert_eq!(el.0.attributes[2].key, "second");
     }
 
     #[test]
@@ -991,7 +1017,6 @@ mod tests {
             "inputmode",
             "enterkeyhint",
             "popover",
-            "data_x",
             "is_content",
         ];
         for ident in identifiers {
@@ -1033,7 +1058,7 @@ mod tests {
             .is_content("x")
             .autofocus_global("true")
             .form_global("f")
-            .data_x("d")
+            .data_attr("x", "d")
             .list_global("l")
             .autocomplete_global("on");
     }

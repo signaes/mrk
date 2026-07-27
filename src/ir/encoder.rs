@@ -17,6 +17,7 @@
 
 use crate::attributes::{Attribute, AttributeType};
 use crate::components::{Component, Expr};
+use crate::components::WrappedAttribute;
 use crate::element::Element;
 use crate::node::Node;
 
@@ -172,8 +173,19 @@ pub(crate) fn encode_expr(e: &Expr, depth: usize, out: &mut Vec<u8>) {
             out.push(b' ');
             write_length_prefixed(body.len().to_string().as_str(), out);
             out.push(b'\n');
-            for attr in attrs {
-                encode_attribute(attr, depth + 1, out);
+            for wa in attrs {
+                match wa {
+                    WrappedAttribute::Static(attr) => {
+                        encode_attribute(attr, depth + 1, out);
+                    }
+                    WrappedAttribute::Dynamic(key, expr) => {
+                        out.extend_from_slice(indent(depth + 1).as_bytes());
+                        out.extend_from_slice(b"D ");
+                        write_length_prefixed(key.as_ref(), out);
+                        out.push(b'\n');
+                        encode_expr(expr, depth + 2, out);
+                    }
+                }
             }
             for b in body {
                 encode_expr(b, depth + 1, out);

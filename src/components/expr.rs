@@ -15,6 +15,30 @@ use crate::attributes::Attribute;
 use crate::element::Element;
 use crate::node::Node;
 
+/// An attribute on a [`Expr::Wrap`] element, either static or dynamic.
+///
+/// - [`Static`](WrappedAttribute::Static) — a compile-time-known
+///   [`Attribute`] produced by [`wrap()`] or the closure DSL.
+/// - [`Dynamic`](WrappedAttribute::Dynamic) — a runtime-evaluated
+///   attribute produced only by the [`comp!`] macro. The key is the
+///   attribute name and the `Expr` is evaluated at render time; its
+///   text form becomes the attribute value.
+///
+/// Dynamic attributes are **only** available through [`comp!`]. The
+/// closure DSL and direct `Expr::Wrap` construction always produce
+/// [`Static`](WrappedAttribute::Static) attributes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum WrappedAttribute {
+    /// A compile-time-known attribute.
+    Static(Attribute),
+    /// A runtime-evaluated attribute (`comp!` only).
+    ///
+    /// The `Cow` is the attribute key (e.g. `"class"`), and the `Expr`
+    /// is evaluated at render time against `Props` to produce the
+    /// attribute value.
+    Dynamic(Cow<'static, str>, Expr),
+}
+
 /// The expression tree of a [`Component`](super::Component).
 ///
 /// Each variant defines what its rendered output looks like:
@@ -106,8 +130,8 @@ pub enum Expr {
     Wrap {
         /// Tag name.
         name: Cow<'static, str>,
-        /// Attributes on the wrapped element.
-        attrs: Vec<Attribute>,
+        /// Attributes on the wrapped element (static or dynamic).
+        attrs: Vec<WrappedAttribute>,
         /// Child expressions. Their rendered outputs are concatenated
         /// as the element's children.
         body: Vec<Box<Expr>>,
@@ -168,6 +192,12 @@ impl IntoExpr for Node {
 impl IntoExpr for &Node {
     fn into_expr(self) -> Expr {
         Expr::LiteralChildren(vec![self.clone()])
+    }
+}
+
+impl IntoExpr for &str {
+    fn into_expr(self) -> Expr {
+        Expr::LiteralChildren(vec![Node::Text(Cow::Owned(self.to_string()))])
     }
 }
 
@@ -275,11 +305,14 @@ pub fn arm(
     }
 }
 
-/// `Wrap { name = el.name, attrs = el.attrs, body = [el.children..., body] }`.
+/// `Wrap { name = el.name, attrs = [Static(a) for a in el.attrs], body = [el.children..., body] }`.
 ///
 /// The `Element`'s existing static children are spliced in before
 /// `body`. If the `Element` has no children, `body` is the only
 /// expression in the `Wrap` body.
+///
+/// All attributes are wrapped as [`WrappedAttribute::Static`]. Use
+/// [`comp!`] for dynamic attributes.
 pub fn wrap(el: Element, body: Expr) -> Expr {
     let mut body_exprs: Vec<Box<Expr>> = Vec::new();
     if !el.children.is_empty() {
@@ -288,7 +321,7 @@ pub fn wrap(el: Element, body: Expr) -> Expr {
     body_exprs.push(Box::new(body));
     Expr::Wrap {
         name: el.name,
-        attrs: el.attributes,
+        attrs: el.attributes.into_iter().map(WrappedAttribute::Static).collect(),
         body: body_exprs,
     }
 }

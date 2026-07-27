@@ -43,7 +43,7 @@ impl Element {
         }
     }
 
-    /// Set the element's attributes, replacing any previously set.
+    /// Append attributes to the element.
     ///
     /// # Example
     ///
@@ -54,7 +54,13 @@ impl Element {
     /// assert_eq!(e.attributes.len(), 1);
     /// ```
     pub fn attrs(mut self, attributes: Vec<Attribute>) -> Self {
-        self.attributes = attributes;
+        self.attributes.extend(attributes);
+        self
+    }
+
+    /// Append a single attribute to the element.
+    pub fn push_attr(mut self, attr: Attribute) -> Self {
+        self.attributes.push(attr);
         self
     }
 
@@ -131,6 +137,24 @@ mod tests {
     fn debug_format() {
         let e = el("div");
         let _ = format!("{:?}", e);
+    }
+
+    #[test]
+    fn push_attr_appends_single() {
+        let e = el("div")
+            .push_attr(attr("class").value("a"))
+            .push_attr(attr("id").value("b"));
+        assert_eq!(e.attributes.len(), 2);
+        assert_eq!(e.attributes[0].key, "class");
+        assert_eq!(e.attributes[1].key, "id");
+    }
+
+    #[test]
+    fn attrs_appends_multiple() {
+        let e = el("div")
+            .attrs(vec![attr("class").value("a")])
+            .attrs(vec![attr("id").value("b")]);
+        assert_eq!(e.attributes.len(), 2);
     }
 
     #[test]

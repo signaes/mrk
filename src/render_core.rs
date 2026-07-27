@@ -1,20 +1,15 @@
 //! Shared rendering impls for [`Element`], [`Node`], and [`Attribute`].
 //!
-//! These are always available (no feature gate). HTML-specific
-//! "void element" semantics (e.g. `<br>` self-closing) are only
-//! applied when the `html` feature is active — under the `svg`
-//! feature alone, every element renders with a closing tag, which
-//! matches SVG's document structure.
+//! These are always available (no feature gate). Void elements
+//! (e.g. `<br>` self-closing) are always handled — the same list is
+//! used regardless of which feature flags are active.
 
 use crate::attributes::{Attribute, AttributeType};
+use crate::constants::VOID_HTML_ELEMENTS;
 use crate::element::Element;
 use crate::node::Node;
 use crate::renderable::Renderable;
 
-#[cfg(feature = "html")]
-use super::constants::VOID_ELEMENTS;
-
-#[cfg(feature = "html")]
 enum Context {
     Void,
     VoidWithAttrs,
@@ -43,34 +38,22 @@ impl Renderable for Element {
         let attributes = join(self.attributes.iter().map(|a| a.render()).collect(), " ");
         let children = join(self.children.iter().map(|c| c.render()).collect(), "");
         let has_attrs = !attributes.is_empty();
-
-        // Void-tag handling is HTML-specific. SVG and other namespaces
-        // always emit closing tags.
-        #[cfg(feature = "html")]
-        {
-            let is_void = VOID_ELEMENTS.contains(&self.name.as_ref());
-            let context = match (is_void, has_attrs) {
-                (true, true) => Context::VoidWithAttrs,
-                (true, false) => Context::Void,
-                (false, true) => Context::WithAttrs,
-                (false, false) => Context::WithoutAttrs,
-            };
-            match context {
-                Context::Void => format!("<{}>", self.name),
-                Context::VoidWithAttrs => format!("<{} {}>", self.name, attributes),
-                Context::WithoutAttrs => {
-                    format!("<{}>{}</{}>", self.name, children, self.name)
-                }
-                Context::WithAttrs => {
-                    format!("<{} {}>{}</{}>", self.name, attributes, children, self.name)
-                }
+        let is_void = VOID_HTML_ELEMENTS.contains(&self.name.as_ref());
+        let context = match (is_void, has_attrs) {
+            (true, true) => Context::VoidWithAttrs,
+            (true, false) => Context::Void,
+            (false, true) => Context::WithAttrs,
+            (false, false) => Context::WithoutAttrs,
+        };
+        match context {
+            Context::Void => format!("<{}>", self.name),
+            Context::VoidWithAttrs => format!("<{} {}>", self.name, attributes),
+            Context::WithoutAttrs => {
+                format!("<{}>{}</{}>", self.name, children, self.name)
             }
-        }
-        #[cfg(not(feature = "html"))]
-        if has_attrs {
-            format!("<{} {}>{}</{}>", self.name, attributes, children, self.name)
-        } else {
-            format!("<{}>{}</{}>", self.name, children, self.name)
+            Context::WithAttrs => {
+                format!("<{} {}>{}</{}>", self.name, attributes, children, self.name)
+            }
         }
     }
 }
@@ -202,19 +185,18 @@ mod tests {
 
     #[test]
     fn svg_no_void() {
-        // SVG element renders with closing tag (no void concept).
+        // "rect" is not in the void-elements list, so it always gets a closing tag.
         let out = el("rect").attrs(vec![attr("width").value("100")]).render();
         assert_eq!(out, r#"<rect width="100"></rect>"#);
     }
 
-    /// HTML void handling depends on whether the `html` feature is on.
-    #[cfg(feature = "html")]
+    /// Void elements always render without a closing tag, regardless
+    /// of feature flags.
     #[test]
     fn html_void_element_no_attrs() {
         assert_eq!(el("br").render(), "<br>");
     }
 
-    #[cfg(feature = "html")]
     #[test]
     fn html_void_element_with_attrs() {
         let html = el("img").attrs(vec![attr("src").value("x.png")]).render();

@@ -12,12 +12,14 @@ use std::collections::HashMap;
 
 use crate::attributes::attr;
 use crate::components::{
-    arm, component, either, list_expr, literal, map, match_on, maybe, prop, wrap, Expr, IntoExpr,
-    Number, NumberKind, PropType, Props, RenderError,
+    arm, component, either, list_expr, literal, map, match_on, maybe, prop, wrap, Component, Expr,
+    ExprCtx, IntoExpr, MatchEntry, Number, NumberKind, Otherwise, PropType, Props, RenderError,
+    WrappedAttribute,
 };
 use crate::components::list;
 use crate::element::{el, Element};
 use crate::node::Node;
+use crate::renderable::Renderable;
 
 // Round-trip tests (`Mrk::bytes_component`, `Mrk::from_bytes_component`,
 // etc.) require the `ir` feature. Import `Mrk` only when those tests
@@ -842,4 +844,786 @@ fn render_wrap_inner_type_mismatch() {
     let result = c.render(&p);
     let is_err = matches!(result, Err(RenderError::TypeMismatch { .. }));
     assert!(is_err);
+}
+
+// =====================================================================
+// Closure DSL — ExprCtx / Component::build
+// =====================================================================
+
+#[test]
+fn build_basic_prop() {
+    let c = Component::build("c", |ctx| ctx.prop("x"));
+    assert_eq!(c.name, "c");
+    assert_eq!(c.expr, Expr::Prop("x".into()));
+}
+
+#[test]
+fn build_returns_same_as_helper() {
+    let closure_c = Component::build("c", |ctx| {
+        ctx.wrap(
+            Element::new("div"),
+            list![ctx.prop("a"), ctx.literal(el("span"))],
+        )
+    });
+    let helper_c = component(
+        "c",
+        wrap(
+            Element::new("div"),
+            list![prop("a"), literal(el("span"))],
+        ),
+    );
+    assert_eq!(closure_c, helper_c);
+}
+
+#[test]
+fn build_prop_render() {
+    let c = Component::build("c", |ctx| ctx.prop("name"));
+    let mut p = Props::new();
+    p.insert("name", PropType::String("Bob".into()));
+    let nodes = c.render(&p).expect("render");
+    assert_eq!(nodes.len(), 1);
+    let is_bob = matches!(&nodes[0], Node::Text(t) if t == "Bob");
+    assert!(is_bob);
+}
+
+#[test]
+fn build_literal_render() {
+    let c = Component::build("c", |ctx| ctx.literal(el("br")));
+    let p = Props::new();
+    let nodes = c.render(&p).expect("render");
+    assert_eq!(nodes.len(), 1);
+    let is_br = matches!(&nodes[0], Node::Element(e) if e.name == "br");
+    assert!(is_br);
+}
+
+#[test]
+fn build_wrap_render() {
+    let c = Component::build("c", |ctx| {
+        ctx.wrap(
+            Element::new("div").attrs(vec![attr("class").value("box")]),
+            list![ctx.prop("msg")],
+        )
+    });
+    let mut p = Props::new();
+    p.insert("msg", PropType::String("hi".into()));
+    let nodes = c.render(&p).expect("render");
+    assert_eq!(nodes.len(), 1);
+    match &nodes[0] {
+        Node::Element(el) => {
+            assert_eq!(el.name, "div");
+            assert_eq!(el.attributes.len(), 1);
+            assert_eq!(el.children.len(), 1);
+        }
+        _ => panic!("expected Element"),
+    }
+}
+
+#[test]
+fn build_either_render() {
+    let c = Component::build("c", |ctx| {
+        ctx.either("flag", (ctx.literal(el("yes")), ctx.literal(el("no"))))
+    });
+    let mut p = Props::new();
+    p.insert("flag", PropType::Bool(true));
+    let nodes = c.render(&p).expect("render");
+    let is_yes = matches!(&nodes[0], Node::Element(e) if e.name == "yes");
+    assert!(is_yes);
+
+    p.insert("flag", PropType::Bool(false));
+    let nodes = c.render(&p).expect("render");
+    let is_no = matches!(&nodes[0], Node::Element(e) if e.name == "no");
+    assert!(is_no);
+}
+
+#[test]
+fn build_maybe_render() {
+    let c = Component::build("c", |ctx| ctx.maybe("flag", ctx.literal(el("shown"))));
+    let mut p = Props::new();
+    p.insert("flag", PropType::Bool(true));
+    let nodes = c.render(&p).expect("render");
+    assert_eq!(nodes.len(), 1);
+
+    p.insert("flag", PropType::Bool(false));
+    let nodes = c.render(&p).expect("render");
+    assert!(nodes.is_empty());
+}
+
+#[test]
+fn build_map_render() {
+    let c = Component::build("c", |ctx| ctx.map("items", ctx.prop("item")));
+    let mut p = Props::new();
+    p.insert(
+        "items",
+        PropType::List(vec![
+            PropType::String("a".into()),
+            PropType::String("b".into()),
+        ]),
+    );
+    let nodes = c.render(&p).expect("render");
+    assert_eq!(nodes.len(), 2);
+}
+
+#[test]
+fn build_match_basic() {
+    let c = Component::build("c", |ctx| {
+        ctx.match_on("role", |otherwise| {
+            vec![
+                ("admin", ctx.literal(el("badge-admin"))).into(),
+                ("dev", ctx.literal(el("badge-dev"))).into(),
+                (otherwise, ctx.literal(el("badge-guest"))).into(),
+            ]
+        })
+    });
+    let mut p = Props::new();
+    p.insert("role", PropType::String("admin".into()));
+    let nodes = c.render(&p).expect("render");
+    let is_admin = matches!(&nodes[0], Node::Element(e) if e.name == "badge-admin");
+    assert!(is_admin);
+
+    p.insert("role", PropType::String("unknown".into()));
+    let nodes = c.render(&p).expect("render");
+    let is_guest = matches!(&nodes[0], Node::Element(e) if e.name == "badge-guest");
+    assert!(is_guest);
+}
+
+#[test]
+fn build_match_default_at_start() {
+    let c = Component::build("c", |ctx| {
+        ctx.match_on("x", |otherwise| {
+            vec![
+                (otherwise, ctx.prop("fallback")).into(),
+                ("a", ctx.prop("av")).into(),
+            ]
+        })
+    });
+    let mut p = Props::new();
+    p.insert("x", PropType::String("a".into()));
+    p.insert("av", PropType::String("a_val".into()));
+    p.insert("fallback", PropType::String("fb_val".into()));
+    let nodes = c.render(&p).expect("render");
+    let is_av = matches!(&nodes[0], Node::Text(t) if t == "a_val");
+    assert!(is_av);
+
+    p.insert("x", PropType::String("z".into()));
+    let nodes = c.render(&p).expect("render");
+    let is_fb = matches!(&nodes[0], Node::Text(t) if t == "fb_val");
+    assert!(is_fb);
+}
+
+#[test]
+fn build_match_default_in_middle() {
+    let c = Component::build("c", |ctx| {
+        ctx.match_on("x", |otherwise| {
+            vec![
+                ("a", ctx.prop("av")).into(),
+                (otherwise, ctx.prop("fallback")).into(),
+                ("b", ctx.prop("bv")).into(),
+            ]
+        })
+    });
+    let mut p = Props::new();
+    p.insert("x", PropType::String("a".into()));
+    p.insert("av", PropType::String("a_val".into()));
+    p.insert("fallback", PropType::String("fb_val".into()));
+    p.insert("bv", PropType::String("b_val".into()));
+    let nodes = c.render(&p).expect("render");
+    let is_av = matches!(&nodes[0], Node::Text(t) if t == "a_val");
+    assert!(is_av);
+
+    p.insert("x", PropType::String("c".into()));
+    let nodes = c.render(&p).expect("render");
+    let is_fb = matches!(&nodes[0], Node::Text(t) if t == "fb_val");
+    assert!(is_fb);
+}
+
+#[test]
+fn build_match_no_arms_only_default() {
+    let c = Component::build("c", |ctx| {
+        ctx.match_on("x", |otherwise| vec![(otherwise, ctx.prop("fallback")).into()])
+    });
+    let mut p = Props::new();
+    p.insert("x", PropType::String("anything".into()));
+    p.insert("fallback", PropType::String("fb_val".into()));
+    let nodes = c.render(&p).expect("render");
+    let is_fb = matches!(&nodes[0], Node::Text(t) if t == "fb_val");
+    assert!(is_fb);
+}
+
+#[test]
+#[should_panic(expected = "exactly one default arm")]
+fn build_match_panics_with_no_default() {
+    let _c = Component::build("c", |ctx| {
+        ctx.match_on("x", |_: &Otherwise| vec![("a", ctx.prop("av")).into()])
+    });
+}
+
+#[test]
+#[should_panic(expected = "exactly one default arm")]
+fn build_match_panics_with_multiple_defaults() {
+    let _c = Component::build("c", |ctx| {
+        ctx.match_on("x", |otherwise| {
+            vec![
+                (otherwise, ctx.prop("a")).into(),
+                (otherwise, ctx.prop("b")).into(),
+            ]
+        })
+    });
+}
+
+#[test]
+fn build_match_round_trips_through_mrk() {
+    #[cfg(feature = "ir")]
+    {
+        use crate::ir::Mrk;
+        let c = Component::build("c", |ctx| {
+            ctx.match_on("role", |otherwise| {
+                vec![
+                    ("admin", ctx.prop("a")).into(),
+                    (otherwise, ctx.prop("fallback")).into(),
+                ]
+            })
+        });
+        let bytes = Mrk::bytes_component(&c);
+        let back = Mrk::from_bytes_component(&bytes).expect("decode");
+        assert_eq!(c, back);
+    }
+}
+
+#[test]
+fn build_match_equivalent_to_match_on_helper() {
+    let closure_c = Component::build("c", |ctx| {
+        ctx.match_on("role", |otherwise| {
+            vec![
+                ("a", ctx.prop("av")).into(),
+                (otherwise, ctx.prop("fallback")).into(),
+            ]
+        })
+    });
+    let helper_c = component(
+        "c",
+        match_on("role", vec![arm("a", prop("av"))], prop("fallback")),
+    );
+    assert_eq!(closure_c, helper_c);
+}
+
+#[test]
+fn build_match_tuple_arm_into() {
+    let entry: MatchEntry = (
+        Cow::Borrowed("foo") as Cow<'static, str>,
+        Expr::Prop("bar".into()),
+    )
+        .into();
+    let is_arm = matches!(entry, MatchEntry::Arm(ref v, _) if v == "foo");
+    assert!(is_arm);
+}
+
+#[test]
+fn build_match_otherwise_into() {
+    let entry: MatchEntry = (Otherwise, Expr::Prop("fb".into())).into();
+    let is_default = matches!(entry, MatchEntry::Default(_));
+    assert!(is_default);
+}
+
+#[test]
+fn build_nested_closures() {
+    let c = Component::build("outer", |ctx| {
+        ctx.wrap(
+            Element::new("div"),
+            list![
+                ctx.prop("title"),
+                ctx.either(
+                    "show_detail",
+                    (ctx.prop("detail"), ctx.literal(el("span"))),
+                ),
+            ],
+        )
+    });
+    let mut p = Props::new();
+    p.insert("title", PropType::String("T".into()));
+    p.insert("show_detail", PropType::Bool(false));
+    let nodes = c.render(&p).expect("render");
+    assert_eq!(nodes.len(), 1);
+}
+
+#[test]
+fn build_element_into_expr() {
+    let c = Component::build("c", |ctx| ctx.wrap(el("section"), ctx.literal(el("p"))));
+    let p = Props::new();
+    let nodes = c.render(&p).expect("render");
+    assert_eq!(nodes.len(), 1);
+}
+
+#[test]
+fn otherwise_is_zero_sized() {
+    assert_eq!(std::mem::size_of::<Otherwise>(), 0);
+}
+
+#[test]
+fn expr_ctx_new() {
+    let ctx = ExprCtx::new();
+    let _ = ctx.prop("k");
+}
+
+#[test]
+fn build_round_trip_simple() {
+    #[cfg(feature = "ir")]
+    {
+        use crate::ir::Mrk;
+        let c = Component::build("c", |ctx| {
+            ctx.wrap(Element::new("p"), list![ctx.prop("name")])
+        });
+        let bytes = Mrk::bytes_component(&c);
+        let back = Mrk::from_bytes_component(&bytes).expect("decode");
+        assert_eq!(c, back);
+    }
+}
+
+#[test]
+fn build_round_trip_with_all_variants() {
+    #[cfg(feature = "ir")]
+    {
+        use crate::ir::Mrk;
+        let c = Component::build("complex", |ctx| {
+            ctx.wrap(
+                Element::new("div").attrs(vec![attr("class").value("x")]),
+                list![
+                    ctx.literal(el("h1").children(vec!["Title".into()])),
+                    ctx.prop("name"),
+                    ctx.either("admin", (ctx.prop("a"), ctx.prop("b"))),
+                    ctx.maybe("show", ctx.prop("c")),
+                    ctx.match_on("role", |otherwise| {
+                        vec![
+                            ("vip", ctx.prop("d")).into(),
+                            (otherwise, ctx.prop("def")).into(),
+                        ]
+                    }),
+                    ctx.map("items", ctx.prop("e")),
+                    Node::Text("static".into()),
+                ],
+            )
+        });
+        let bytes = Mrk::bytes_component(&c);
+        let back = Mrk::from_bytes_component(&bytes).expect("decode");
+        assert_eq!(c, back);
+    }
+}
+
+// =====================================================================
+// Props::defaults
+// =====================================================================
+
+#[test]
+fn props_defaults_caller_wins_on_collision() {
+    let mut fallbacks = Props::new();
+    fallbacks.insert("color", PropType::String("blue".into()));
+    let mut caller = Props::new();
+    caller.insert("color", PropType::String("red".into()));
+    let merged = caller.defaults(&fallbacks);
+    assert_eq!(
+        merged.get("color"),
+        Some(&PropType::String("red".into())),
+    );
+}
+
+#[test]
+fn props_defaults_fills_missing_keys() {
+    let mut fallbacks = Props::new();
+    fallbacks.insert("size", PropType::Number(Number::int("12")));
+    let caller = Props::new();
+    let merged = caller.defaults(&fallbacks);
+    assert_eq!(
+        merged.get("size"),
+        Some(&PropType::Number(Number::int("12"))),
+    );
+}
+
+#[test]
+fn props_defaults_does_not_mutate_inputs() {
+    let mut fallbacks = Props::new();
+    fallbacks.insert("k", PropType::String("fb".into()));
+    let mut caller = Props::new();
+    caller.insert("k", PropType::String("caller".into()));
+    let _merged = caller.defaults(&fallbacks);
+    assert_eq!(
+        fallbacks.get("k"),
+        Some(&PropType::String("fb".into())),
+    );
+    assert_eq!(
+        caller.get("k"),
+        Some(&PropType::String("caller".into())),
+    );
+}
+
+#[test]
+fn props_defaults_with_empty_caller() {
+    let mut fallbacks = Props::new();
+    fallbacks.insert("a", PropType::Bool(true));
+    let caller = Props::new();
+    let merged = caller.defaults(&fallbacks);
+    assert_eq!(merged.len(), 1);
+    let is_bool = matches!(merged.get("a"), Some(PropType::Bool(true)));
+    assert!(is_bool);
+}
+
+#[test]
+fn props_defaults_with_empty_defaults() {
+    let mut caller = Props::new();
+    caller.insert("x", PropType::String("val".into()));
+    let fallbacks = Props::new();
+    let merged = caller.defaults(&fallbacks);
+    assert_eq!(merged.len(), 1);
+    assert_eq!(
+        merged.get("x"),
+        Some(&PropType::String("val".into())),
+    );
+}
+
+#[test]
+fn props_defaults_with_both_empty() {
+    let caller = Props::new();
+    let fallbacks = Props::new();
+    let merged = caller.defaults(&fallbacks);
+    assert!(merged.is_empty());
+}
+
+#[test]
+fn props_defaults_render_uses_fallback() {
+    let mut fallbacks = Props::new();
+    fallbacks.insert("msg", PropType::String("default msg".into()));
+    let caller = Props::new();
+    let merged = caller.defaults(&fallbacks);
+    let c = component("c", prop("msg"));
+    let nodes = c.render(&merged).expect("render");
+    let is_default = matches!(&nodes[0], Node::Text(t) if t == "default msg");
+    assert!(is_default);
+}
+
+// =====================================================================
+// Coexistence: old free-function vs new Component::build
+// =====================================================================
+
+#[test]
+fn coexist_old_and_new_forms_produce_different_structures() {
+    let old_form = component("c", prop("x"));
+    let new_form = Component::build("c", |ctx| ctx.prop("x"));
+    assert_eq!(old_form, new_form);
+}
+
+#[test]
+fn coexist_old_form_renders() {
+    let c = component("c", prop("name"));
+    let mut p = Props::new();
+    p.insert("name", PropType::String("old".into()));
+    let nodes = c.render(&p).expect("render");
+    let is_old = matches!(&nodes[0], Node::Text(t) if t == "old");
+    assert!(is_old);
+}
+
+#[test]
+fn coexist_new_form_renders() {
+    let c = Component::build("c", |ctx| ctx.prop("name"));
+    let mut p = Props::new();
+    p.insert("name", PropType::String("new".into()));
+    let nodes = c.render(&p).expect("render");
+    let is_new = matches!(&nodes[0], Node::Text(t) if t == "new");
+    assert!(is_new);
+}
+
+#[test]
+fn build_wrap_with_literal_children() {
+    let el_with_children =
+        Element::new("div").children(vec![Node::Text("static".into())]);
+    let c = Component::build("c", |ctx| ctx.wrap(el_with_children, ctx.prop("dyn")));
+    let p = Props::new();
+    let nodes = c.render(&p).expect("render");
+    assert_eq!(nodes.len(), 1);
+    match &nodes[0] {
+        Node::Element(e) => {
+            assert_eq!(e.name, "div");
+            assert_eq!(e.children.len(), 2);
+        }
+        _ => panic!("expected Element"),
+    }
+}
+
+#[test]
+fn build_ctx_component_method() {
+    let c = ExprCtx::new();
+    let comp = c.component("inner", c.prop("x"));
+    assert_eq!(comp.name, "inner");
+    let is_prop = matches!(comp.expr, Expr::Prop(ref k) if k == "x");
+    assert!(is_prop);
+}
+
+// =====================================================================
+// comp! and text! macros
+
+#[test]
+fn comp_macro_bare_tag() {
+    let expr = crate::comp!(br);
+    let is_wrap = matches!(
+        expr,
+        Expr::Wrap {
+            ref name,
+            ref attrs,
+            ref body,
+        } if name == "br" && attrs.is_empty() && body.is_empty()
+    );
+    assert!(is_wrap, "expected bare Wrap, got: {expr:?}");
+}
+
+#[test]
+fn comp_macro_single_child() {
+    let expr = crate::comp!(h1, { crate::prop("title") });
+    let is_wrap = matches!(
+        expr,
+        Expr::Wrap {
+            ref name,
+            ref attrs,
+            ref body,
+        } if name == "h1" && attrs.is_empty() && body.len() == 1
+    );
+    assert!(is_wrap, "expected Wrap with one child, got: {expr:?}");
+}
+
+#[test]
+fn comp_macro_multiple_children() {
+    let expr = crate::comp!(div, [crate::comp!(p, { crate::prop("a") }), crate::comp!(p, { crate::prop("b") })]);
+    let is_wrap = matches!(
+        expr,
+        Expr::Wrap {
+            ref name,
+            ref attrs,
+            ref body,
+        } if name == "div" && attrs.is_empty() && body.len() == 2
+    );
+    assert!(is_wrap, "expected Wrap with two children, got: {expr:?}");
+}
+
+#[test]
+fn comp_macro_attrs_single_child() {
+    let expr = crate::comp!(div, class="card", id="main", { crate::prop("title") });
+    match expr {
+        Expr::Wrap { name, attrs, body } => {
+            assert_eq!(name, "div");
+            assert_eq!(attrs.len(), 2);
+            assert_eq!(body.len(), 1);
+            assert!(matches!(
+                &attrs[0],
+                WrappedAttribute::Dynamic(k, _) if k == "class"
+            ));
+            assert!(matches!(
+                &attrs[1],
+                WrappedAttribute::Dynamic(k, _) if k == "id"
+            ));
+        }
+        _ => panic!("expected Wrap, got: {expr:?}"),
+    }
+}
+
+#[test]
+fn comp_macro_attrs_multiple_children() {
+    let expr = crate::comp!(ul, class="list", [crate::comp!(li, { crate::prop("item") })]);
+    match expr {
+        Expr::Wrap { name, attrs, body } => {
+            assert_eq!(name, "ul");
+            assert_eq!(attrs.len(), 1);
+            assert_eq!(body.len(), 1);
+            assert!(matches!(
+                &attrs[0],
+                WrappedAttribute::Dynamic(k, _) if k == "class"
+            ));
+        }
+        _ => panic!("expected Wrap, got: {expr:?}"),
+    }
+}
+
+#[test]
+fn text_macro_single() {
+    let expr = crate::text!("hello");
+    let is_list = matches!(expr, Expr::List(ref items) if items.len() == 1);
+    assert!(is_list, "expected List with one item, got: {expr:?}");
+}
+
+#[test]
+fn text_macro_multiple() {
+    let expr = crate::text!(crate::prop("first"), " ", crate::prop("last"));
+    let is_list = matches!(expr, Expr::List(ref items) if items.len() == 3);
+    assert!(is_list, "expected List with three items, got: {expr:?}");
+}
+
+#[test]
+fn comp_macro_render_bare() {
+    let c = component("c", crate::comp!(br));
+    let p = Props::new();
+    let nodes = c.render(&p).expect("render");
+    let html: String = nodes.iter().map(|n| n.render()).collect();
+    assert_eq!(html, "<br>");
+}
+
+#[test]
+fn comp_macro_render_with_dynamic_attr() {
+    let c = component("c", crate::comp!(div, class="card", { crate::prop("text") }));
+    let mut p = Props::new();
+    p.insert("text", PropType::String("hello".into()));
+    let nodes = c.render(&p).expect("render");
+    let html: String = nodes.iter().map(|n| n.render()).collect();
+    assert_eq!(html, "<div class=\"card\">hello</div>");
+}
+
+#[test]
+fn comp_macro_render_nested() {
+    let c = component(
+        "c",
+        crate::comp!(div, [
+            crate::comp!(h1, { crate::prop("title") }),
+            crate::comp!(p, { crate::prop("body") }),
+        ]),
+    );
+    let mut p = Props::new();
+    p.insert("title", PropType::String("Hi".into()));
+    p.insert("body", PropType::String("World".into()));
+    let nodes = c.render(&p).expect("render");
+    let html: String = nodes.iter().map(|n| n.render()).collect();
+    assert_eq!(
+        html,
+        "<div><h1>Hi</h1><p>World</p></div>"
+    );
+}
+
+#[test]
+fn wrapped_attribute_static_debug() {
+    let a = attr("class").value("card");
+    let wa = WrappedAttribute::Static(a);
+    assert!(format!("{wa:?}").contains("Static"));
+    assert!(format!("{wa:?}").contains("class"));
+}
+
+#[test]
+fn wrapped_attribute_dynamic_debug() {
+    let wa = WrappedAttribute::Dynamic("id".into(), Expr::Prop("x".into()));
+    let dbg = format!("{wa:?}");
+    assert!(dbg.contains("Dynamic"));
+    assert!(dbg.contains("id"));
+}
+
+#[test]
+fn wrapped_attribute_static_eq() {
+    let a = WrappedAttribute::Static(attr("href").value("#"));
+    let b = WrappedAttribute::Static(attr("href").value("#"));
+    let c = WrappedAttribute::Static(attr("href").value("/other"));
+    assert_eq!(a, b);
+    assert_ne!(a, c);
+}
+
+#[test]
+fn wrapped_attribute_dynamic_eq() {
+    let a = WrappedAttribute::Dynamic("k".into(), Expr::Prop("x".into()));
+    let b = WrappedAttribute::Dynamic("k".into(), Expr::Prop("x".into()));
+    let c = WrappedAttribute::Dynamic("k".into(), Expr::Prop("y".into()));
+    assert_eq!(a, b);
+    assert_ne!(a, c);
+}
+
+#[test]
+fn wrapped_attribute_static_ne_dynamic() {
+    let a = WrappedAttribute::Static(attr("k").value("v"));
+    let b = WrappedAttribute::Dynamic("k".into(), Expr::LiteralChildren(vec![Node::Text("v".into())]));
+    assert_ne!(a, b);
+}
+
+#[test]
+fn into_expr_str_in_comp_macro() {
+    let expr = crate::comp!(p, { "static text" });
+    match expr {
+        Expr::Wrap { name, attrs, body } => {
+            assert_eq!(name, "p");
+            assert!(attrs.is_empty());
+            assert_eq!(body.len(), 1);
+            let is_literal = matches!(*body[0], Expr::LiteralChildren(_));
+            assert!(is_literal, "expected LiteralChildren, got: {:?}", *body[0]);
+        }
+        _ => panic!("expected Wrap, got: {expr:?}"),
+    }
+}
+
+#[test]
+fn comp_macro_dynamic_attr_multi_node_fallback() {
+    let c = component(
+        "c",
+        Expr::Wrap {
+            name: "div".into(),
+            attrs: vec![WrappedAttribute::Dynamic(
+                "class".into(),
+                Expr::LiteralChildren(vec![
+                    Node::Text("a".into()),
+                    Node::Element(crate::element::el("span")),
+                ]),
+            )],
+            body: vec![],
+        },
+    );
+    let p = Props::new();
+    let nodes = c.render(&p).expect("render");
+    let html: String = nodes.iter().map(|n| n.render()).collect();
+    assert_eq!(html, r#"<div class="a&lt;span&gt;&lt;/span&gt;"></div>"#);
+}
+
+#[test]
+fn ir_round_trip_dynamic_attr() {
+    use crate::ir::Mrk;
+    let c = component(
+        "c",
+        Expr::Wrap {
+            name: "div".into(),
+            attrs: vec![WrappedAttribute::Dynamic(
+                "class".into(),
+                Expr::Prop("cls".into()),
+            )],
+            body: vec![],
+        },
+    );
+    let bytes = Mrk::bytes_component(&c);
+    let back = Mrk::from_bytes_component(&bytes).expect("decode");
+    assert_eq!(c, back);
+}
+
+#[test]
+fn ir_round_trip_mixed_attrs() {
+    use crate::ir::Mrk;
+    let c = component(
+        "c",
+        Expr::Wrap {
+            name: "div".into(),
+            attrs: vec![
+                WrappedAttribute::Static(attr("id").value("main")),
+                WrappedAttribute::Dynamic("class".into(), Expr::Prop("cls".into())),
+            ],
+            body: vec![],
+        },
+    );
+    let bytes = Mrk::bytes_component(&c);
+    let back = Mrk::from_bytes_component(&bytes).expect("decode");
+    assert_eq!(c, back);
+}
+
+#[test]
+fn wrap_dynamic_attr_render_expr_error() {
+    let c = Component {
+        name: "test".into(),
+        expr: Expr::Wrap {
+            name: "div".into(),
+            attrs: vec![WrappedAttribute::Dynamic(
+                "class".into(),
+                Expr::Match {
+                    key: "missing".into(),
+                    arms: vec![],
+                    default: Box::new(Expr::Prop("x".into())),
+                },
+            )],
+            body: vec![],
+        },
+    };
+    let err = c.render(&Props::new()).unwrap_err();
+    assert!(matches!(err, RenderError::TypeMismatch { .. }));
 }

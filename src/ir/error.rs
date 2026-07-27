@@ -35,7 +35,7 @@ pub enum ParseError {
     /// version.
     UnknownVersion(u32),
     /// A token byte was neither `E`/`A`/`B`/`T`/`R` (Element IR) nor
-    /// `L`/`P`/`S`/`M`/`I`/`O`/`F`/`W`/`N`/`C` (Component IR).
+    /// `L`/`P`/`S`/`M`/`I`/`O`/`F`/`W`/`N`/`C`/`D` (Component IR).
     UnknownToken {
         /// Line number where the unknown token appeared.
         line: usize,
