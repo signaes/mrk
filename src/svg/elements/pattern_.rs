@@ -18,8 +18,10 @@ One of `userSpaceOnUse` (default) or `objectBoundingBox`."#),
     preserve_aspect_ratio(r#"Aspect-ratio handling for the pattern."#),
     view_box(r#"Internal viewBox of the pattern."#));
 
-// Create a new [`SvgPattern`] element (`<pattern>`).
-svg_factory!(pattern, SvgPattern);
+svg_factory!(
+    /// Create a new [`SvgPattern`] element (`<pattern>`).
+    pattern, SvgPattern
+);
 
 #[cfg(test)]
 mod tests {

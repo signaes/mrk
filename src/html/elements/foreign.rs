@@ -27,10 +27,14 @@ The standard value is `http://www.w3.org/2000/svg`. Required when the SVG is ser
 
 Legacy attribute; was required in SVG 1.1 to identify the version of the SVG language in use. SVG 2 dropped the requirement and the attribute is no longer needed. If present, the standard value is `1.1`."#));
 
-// Create a new [`HtmlMath`] element (`<math>`).
-factory!(math, HtmlMath);
-// Create a new [`HtmlSvg`] element (`<svg>`).
-factory!(svg, HtmlSvg);
+factory!(
+    /// Create a new [`HtmlMath`] element (`<math>`).
+    math, HtmlMath
+);
+factory!(
+    /// Create a new [`HtmlSvg`] element (`<svg>`).
+    svg, HtmlSvg
+);
 
 #[cfg(test)]
 mod tests {

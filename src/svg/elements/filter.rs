@@ -211,32 +211,106 @@ One of `stitch` (default) or `noStitch`."#),
     r#type(r#"Fractal type: `fractalNoise` (default) or `fractalSum`."#),
     result(r#"Output identifier."#));
 
-// Create factories.
-svg_factory!(filter, SvgFilter);
-svg_factory!(fe_blend, SvgFeBlend);
-svg_factory!(fe_color_matrix, SvgFeColorMatrix);
-svg_factory!(fe_component_transfer, SvgFeComponentTransfer);
-svg_factory!(fe_composite, SvgFeComposite);
-svg_factory!(fe_convolve_matrix, SvgFeConvolveMatrix);
-svg_factory!(fe_diffuse_lighting, SvgFeDiffuseLighting);
-svg_factory!(fe_displacement_map, SvgFeDisplacementMap);
-svg_factory!(fe_distant_light, SvgFeDistantLight);
-svg_factory!(fe_flood, SvgFeFlood);
-svg_factory!(fe_func_a, SvgFeFuncA);
-svg_factory!(fe_func_r, SvgFeFuncR);
-svg_factory!(fe_func_g, SvgFeFuncG);
-svg_factory!(fe_func_b, SvgFeFuncB);
-svg_factory!(fe_gaussian_blur, SvgFeGaussianBlur);
-svg_factory!(fe_image, SvgFeImage);
-svg_factory!(fe_merge, SvgFeMerge);
-svg_factory!(fe_merge_node, SvgFeMergeNode);
-svg_factory!(fe_morphology, SvgFeMorphology);
-svg_factory!(fe_offset, SvgFeOffset);
-svg_factory!(fe_point_light, SvgFePointLight);
-svg_factory!(fe_specular_lighting, SvgFeSpecularLighting);
-svg_factory!(fe_spot_light, SvgFeSpotLight);
-svg_factory!(fe_tile, SvgFeTile);
-svg_factory!(fe_turbulence, SvgFeTurbulence);
+svg_factory!(
+    /// Create a new [`SvgFilter`] element (`<filter>`).
+    filter, SvgFilter
+);
+svg_factory!(
+    /// Create a new [`SvgFeBlend`] element (`<feBlend>`).
+    fe_blend, SvgFeBlend
+);
+svg_factory!(
+    /// Create a new [`SvgFeColorMatrix`] element (`<feColorMatrix>`).
+    fe_color_matrix, SvgFeColorMatrix
+);
+svg_factory!(
+    /// Create a new [`SvgFeComponentTransfer`] element (`<feComponentTransfer>`).
+    fe_component_transfer, SvgFeComponentTransfer
+);
+svg_factory!(
+    /// Create a new [`SvgFeComposite`] element (`<feComposite>`).
+    fe_composite, SvgFeComposite
+);
+svg_factory!(
+    /// Create a new [`SvgFeConvolveMatrix`] element (`<feConvolveMatrix>`).
+    fe_convolve_matrix, SvgFeConvolveMatrix
+);
+svg_factory!(
+    /// Create a new [`SvgFeDiffuseLighting`] element (`<feDiffuseLighting>`).
+    fe_diffuse_lighting, SvgFeDiffuseLighting
+);
+svg_factory!(
+    /// Create a new [`SvgFeDisplacementMap`] element (`<feDisplacementMap>`).
+    fe_displacement_map, SvgFeDisplacementMap
+);
+svg_factory!(
+    /// Create a new [`SvgFeDistantLight`] element (`<feDistantLight>`).
+    fe_distant_light, SvgFeDistantLight
+);
+svg_factory!(
+    /// Create a new [`SvgFeFlood`] element (`<feFlood>`).
+    fe_flood, SvgFeFlood
+);
+svg_factory!(
+    /// Create a new [`SvgFeFuncA`] element (`<feFuncA>`).
+    fe_func_a, SvgFeFuncA
+);
+svg_factory!(
+    /// Create a new [`SvgFeFuncR`] element (`<feFuncR>`).
+    fe_func_r, SvgFeFuncR
+);
+svg_factory!(
+    /// Create a new [`SvgFeFuncG`] element (`<feFuncG>`).
+    fe_func_g, SvgFeFuncG
+);
+svg_factory!(
+    /// Create a new [`SvgFeFuncB`] element (`<feFuncB>`).
+    fe_func_b, SvgFeFuncB
+);
+svg_factory!(
+    /// Create a new [`SvgFeGaussianBlur`] element (`<feGaussianBlur>`).
+    fe_gaussian_blur, SvgFeGaussianBlur
+);
+svg_factory!(
+    /// Create a new [`SvgFeImage`] element (`<feImage>`).
+    fe_image, SvgFeImage
+);
+svg_factory!(
+    /// Create a new [`SvgFeMerge`] element (`<feMerge>`).
+    fe_merge, SvgFeMerge
+);
+svg_factory!(
+    /// Create a new [`SvgFeMergeNode`] element (`<feMergeNode>`).
+    fe_merge_node, SvgFeMergeNode
+);
+svg_factory!(
+    /// Create a new [`SvgFeMorphology`] element (`<feMorphology>`).
+    fe_morphology, SvgFeMorphology
+);
+svg_factory!(
+    /// Create a new [`SvgFeOffset`] element (`<feOffset>`).
+    fe_offset, SvgFeOffset
+);
+svg_factory!(
+    /// Create a new [`SvgFePointLight`] element (`<fePointLight>`).
+    fe_point_light, SvgFePointLight
+);
+svg_factory!(
+    /// Create a new [`SvgFeSpecularLighting`] element (`<feSpecularLighting>`).
+    fe_specular_lighting, SvgFeSpecularLighting
+);
+svg_factory!(
+    /// Create a new [`SvgFeSpotLight`] element (`<feSpotLight>`).
+    fe_spot_light, SvgFeSpotLight
+);
+svg_factory!(
+    /// Create a new [`SvgFeTile`] element (`<feTile>`).
+    fe_tile, SvgFeTile
+);
+svg_factory!(
+    /// Create a new [`SvgFeTurbulence`] element (`<feTurbulence>`).
+    fe_turbulence, SvgFeTurbulence
+);
 
 #[cfg(test)]
 mod tests {

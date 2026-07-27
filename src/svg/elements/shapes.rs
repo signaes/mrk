@@ -44,14 +44,34 @@ define_svg_element!(SvgPath, "path",
     d(r#"Path data defining the shape's outline."#),
     path_length(r#"Author-specified total length of the path."#));
 
-// Create factories.
-svg_factory!(circle, SvgCircle);
-svg_factory!(ellipse, SvgEllipse);
-svg_factory!(line, SvgLine);
-svg_factory!(polyline, SvgPolyline);
-svg_factory!(polygon, SvgPolygon);
-svg_factory!(rect, SvgRect);
-svg_factory!(path, SvgPath);
+svg_factory!(
+    /// Create a new [`SvgCircle`] element (`<circle>`).
+    circle, SvgCircle
+);
+svg_factory!(
+    /// Create a new [`SvgEllipse`] element (`<ellipse>`).
+    ellipse, SvgEllipse
+);
+svg_factory!(
+    /// Create a new [`SvgLine`] element (`<line>`).
+    line, SvgLine
+);
+svg_factory!(
+    /// Create a new [`SvgPolyline`] element (`<polyline>`).
+    polyline, SvgPolyline
+);
+svg_factory!(
+    /// Create a new [`SvgPolygon`] element (`<polygon>`).
+    polygon, SvgPolygon
+);
+svg_factory!(
+    /// Create a new [`SvgRect`] element (`<rect>`).
+    rect, SvgRect
+);
+svg_factory!(
+    /// Create a new [`SvgPath`] element (`<path>`).
+    path, SvgPath
+);
 
 #[cfg(test)]
 mod tests {

@@ -14,14 +14,22 @@ define_svg_element!(SvgForeignObject, "foreignObject",
     width(r#"Width of the foreign object (must be a `<length>`). Required."#),
     height(r#"Height of the foreign object (must be a `<length>`). Required."#));
 
-// Create a new [`SvgTitle`] element (`<title>`).
-svg_factory!(title, SvgTitle);
-// Create a new [`SvgDesc`] element (`<desc>`).
-svg_factory!(desc, SvgDesc);
-// Create a new [`SvgMetadata`] element (`<metadata>`).
-svg_factory!(metadata, SvgMetadata);
-// Create a new [`SvgForeignObject`] element (`<foreignObject>`).
-svg_factory!(foreign_object, SvgForeignObject);
+svg_factory!(
+    /// Create a new [`SvgTitle`] element (`<title>`).
+    title, SvgTitle
+);
+svg_factory!(
+    /// Create a new [`SvgDesc`] element (`<desc>`).
+    desc, SvgDesc
+);
+svg_factory!(
+    /// Create a new [`SvgMetadata`] element (`<metadata>`).
+    metadata, SvgMetadata
+);
+svg_factory!(
+    /// Create a new [`SvgForeignObject`] element (`<foreignObject>`).
+    foreign_object, SvgForeignObject
+);
 
 #[cfg(test)]
 mod tests {

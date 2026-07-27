@@ -47,26 +47,46 @@ Used by assistive technologies to navigate table data."#),
 
 A short label, used in place of the cell's full content when the user agent cannot render the full content (e.g. small screens, screen readers)."#));
 
-// Create a new [`HtmlTable`] element (`<table>`).
-factory!(table, HtmlTable);
-// Create a new [`HtmlCaption`] element (`<caption>`).
-factory!(caption, HtmlCaption);
-// Create a new [`HtmlColgroup`] element (`<colgroup>`).
-factory!(colgroup, HtmlColgroup);
-// Create a new [`HtmlCol`] element (`<col>`).
-factory!(col, HtmlCol);
-// Create a new [`HtmlTbody`] element (`<tbody>`).
-factory!(tbody, HtmlTbody);
-// Create a new [`HtmlThead`] element (`<thead>`).
-factory!(thead, HtmlThead);
-// Create a new [`HtmlTfoot`] element (`<tfoot>`).
-factory!(tfoot, HtmlTfoot);
-// Create a new [`HtmlTr`] element (`<tr>`).
-factory!(tr, HtmlTr);
-// Create a new [`HtmlTd`] element (`<td>`).
-factory!(td, HtmlTd);
-// Create a new [`HtmlTh`] element (`<th>`).
-factory!(th, HtmlTh);
+factory!(
+    /// Create a new [`HtmlTable`] element (`<table>`).
+    table, HtmlTable
+);
+factory!(
+    /// Create a new [`HtmlCaption`] element (`<caption>`).
+    caption, HtmlCaption
+);
+factory!(
+    /// Create a new [`HtmlColgroup`] element (`<colgroup>`).
+    colgroup, HtmlColgroup
+);
+factory!(
+    /// Create a new [`HtmlCol`] element (`<col>`).
+    col, HtmlCol
+);
+factory!(
+    /// Create a new [`HtmlTbody`] element (`<tbody>`).
+    tbody, HtmlTbody
+);
+factory!(
+    /// Create a new [`HtmlThead`] element (`<thead>`).
+    thead, HtmlThead
+);
+factory!(
+    /// Create a new [`HtmlTfoot`] element (`<tfoot>`).
+    tfoot, HtmlTfoot
+);
+factory!(
+    /// Create a new [`HtmlTr`] element (`<tr>`).
+    tr, HtmlTr
+);
+factory!(
+    /// Create a new [`HtmlTd`] element (`<td>`).
+    td, HtmlTd
+);
+factory!(
+    /// Create a new [`HtmlTh`] element (`<th>`).
+    th, HtmlTh
+);
 
 #[cfg(test)]
 mod tests {

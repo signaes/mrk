@@ -75,11 +75,22 @@ define_svg_element!(SvgAnimateMotion, "animateMotion",
     key_splines(r#"Bezier control points."#),
     key_points(r#"Distance fractions paired with `key_times` when `calc_mode=\"linear\"`."#));
 
-// Create factories.
-svg_factory!(animate, SvgAnimate);
-svg_factory!(set, SvgSet);
-svg_factory!(animate_transform, SvgAnimateTransform);
-svg_factory!(animate_motion, SvgAnimateMotion);
+svg_factory!(
+    /// Create a new [`SvgAnimate`] element (`<animate>`).
+    animate, SvgAnimate
+);
+svg_factory!(
+    /// Create a new [`SvgSet`] element (`<set>`).
+    set, SvgSet
+);
+svg_factory!(
+    /// Create a new [`SvgAnimateTransform`] element (`<animateTransform>`).
+    animate_transform, SvgAnimateTransform
+);
+svg_factory!(
+    /// Create a new [`SvgAnimateMotion`] element (`<animateMotion>`).
+    animate_motion, SvgAnimateMotion
+);
 
 #[cfg(test)]
 mod tests {

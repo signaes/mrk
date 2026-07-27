@@ -42,10 +42,18 @@ total length."#),
 
 One of `left` (default) or `right`."#));
 
-// Create factories.
-svg_factory!(text, SvgText);
-svg_factory!(tspan, SvgTspan);
-svg_factory!(text_path, SvgTextPath);
+svg_factory!(
+    /// Create a new [`SvgText`] element (`<text>`).
+    text, SvgText
+);
+svg_factory!(
+    /// Create a new [`SvgTspan`] element (`<tspan>`).
+    tspan, SvgTspan
+);
+svg_factory!(
+    /// Create a new [`SvgTextPath`] element (`<textPath>`).
+    text_path, SvgTextPath
+);
 
 #[cfg(test)]
 mod tests {

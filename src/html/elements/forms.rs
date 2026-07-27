@@ -366,34 +366,62 @@ This is a boolean attribute. In HTML, presence is sufficient; the value is conve
 Submitted with the form as part of the name/value pair only if the fieldset is the form's first `<fieldset>` ancestor of an element being submitted."#));
 define_html_element!(HtmlLegend, "legend", all);
 
-// Create a new [`HtmlForm`] element (`<form>`).
-factory!(form, HtmlForm);
-// Create a new [`HtmlLabel`] element (`<label>`).
-factory!(label, HtmlLabel);
-// Create a new [`HtmlInput`] element (`<input>`).
-factory!(input, HtmlInput);
-// Create a new [`HtmlButton`] element (`<button>`).
-factory!(button, HtmlButton);
-// Create a new [`HtmlSelect`] element (`<select>`).
-factory!(select, HtmlSelect);
-// Create a new [`HtmlDatalist`] element (`<datalist>`).
-factory!(datalist, HtmlDatalist);
-// Create a new [`HtmlOptgroup`] element (`<optgroup>`).
-factory!(optgroup, HtmlOptgroup);
-// Create a new [`HtmlOption`] element (`<option>`).
-factory!(option, HtmlOption);
-// Create a new [`HtmlTextarea`] element (`<textarea>`).
-factory!(textarea, HtmlTextarea);
-// Create a new [`HtmlOutput`] element (`<output>`).
-factory!(output, HtmlOutput);
-// Create a new [`HtmlProgress`] element (`<progress>`).
-factory!(progress, HtmlProgress);
-// Create a new [`HtmlMeter`] element (`<meter>`).
-factory!(meter, HtmlMeter);
-// Create a new [`HtmlFieldset`] element (`<fieldset>`).
-factory!(fieldset, HtmlFieldset);
-// Create a new [`HtmlLegend`] element (`<legend>`).
-factory!(legend, HtmlLegend);
+factory!(
+    /// Create a new [`HtmlForm`] element (`<form>`).
+    form, HtmlForm
+);
+factory!(
+    /// Create a new [`HtmlLabel`] element (`<label>`).
+    label, HtmlLabel
+);
+factory!(
+    /// Create a new [`HtmlInput`] element (`<input>`).
+    input, HtmlInput
+);
+factory!(
+    /// Create a new [`HtmlButton`] element (`<button>`).
+    button, HtmlButton
+);
+factory!(
+    /// Create a new [`HtmlSelect`] element (`<select>`).
+    select, HtmlSelect
+);
+factory!(
+    /// Create a new [`HtmlDatalist`] element (`<datalist>`).
+    datalist, HtmlDatalist
+);
+factory!(
+    /// Create a new [`HtmlOptgroup`] element (`<optgroup>`).
+    optgroup, HtmlOptgroup
+);
+factory!(
+    /// Create a new [`HtmlOption`] element (`<option>`).
+    option, HtmlOption
+);
+factory!(
+    /// Create a new [`HtmlTextarea`] element (`<textarea>`).
+    textarea, HtmlTextarea
+);
+factory!(
+    /// Create a new [`HtmlOutput`] element (`<output>`).
+    output, HtmlOutput
+);
+factory!(
+    /// Create a new [`HtmlProgress`] element (`<progress>`).
+    progress, HtmlProgress
+);
+factory!(
+    /// Create a new [`HtmlMeter`] element (`<meter>`).
+    meter, HtmlMeter
+);
+factory!(
+    /// Create a new [`HtmlFieldset`] element (`<fieldset>`).
+    fieldset, HtmlFieldset
+);
+factory!(
+    /// Create a new [`HtmlLegend`] element (`<legend>`).
+    legend, HtmlLegend
+);
 
 #[cfg(test)]
 mod tests {

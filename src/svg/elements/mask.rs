@@ -19,9 +19,14 @@ define_svg_element!(SvgClipPath, "clipPath",
 
 One of `userSpaceOnUse` (default) or `objectBoundingBox`."#));
 
-// Create factories.
-svg_factory!(mask, SvgMask);
-svg_factory!(clip_path, SvgClipPath);
+svg_factory!(
+    /// Create a new [`SvgMask`] element (`<mask>`).
+    mask, SvgMask
+);
+svg_factory!(
+    /// Create a new [`SvgClipPath`] element (`<clipPath>`).
+    clip_path, SvgClipPath
+);
 
 #[cfg(test)]
 mod tests {

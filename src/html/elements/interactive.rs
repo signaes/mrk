@@ -73,22 +73,38 @@ define_html_element!(HtmlSlot, "slot", all, name(r#"Name of the slot.
 
 Slots with a `name` attribute match elements with a `slot` attribute of the same value; slots without a `name` are the default slot. Inherited from the standard slotting algorithm used by the Shadow DOM API."#));
 
-// Create a new [`HtmlCanvas`] element (`<canvas>`).
-factory!(canvas, HtmlCanvas);
-// Create a new [`HtmlDetails`] element (`<details>`).
-factory!(details, HtmlDetails);
-// Create a new [`HtmlSummary`] element (`<summary>`).
-factory!(summary, HtmlSummary);
-// Create a new [`HtmlDialog`] element (`<dialog>`).
-factory!(dialog, HtmlDialog);
-// Create a new [`HtmlScript`] element (`<script>`).
-factory!(script, HtmlScript);
-// Create a new [`HtmlNoscript`] element (`<noscript>`).
-factory!(noscript, HtmlNoscript);
-// Create a new [`HtmlTemplate`] element (`<template>`).
-factory!(template, HtmlTemplate);
-// Create a new [`HtmlSlot`] element (`<slot>`).
-factory!(slot, HtmlSlot);
+factory!(
+    /// Create a new [`HtmlCanvas`] element (`<canvas>`).
+    canvas, HtmlCanvas
+);
+factory!(
+    /// Create a new [`HtmlDetails`] element (`<details>`).
+    details, HtmlDetails
+);
+factory!(
+    /// Create a new [`HtmlSummary`] element (`<summary>`).
+    summary, HtmlSummary
+);
+factory!(
+    /// Create a new [`HtmlDialog`] element (`<dialog>`).
+    dialog, HtmlDialog
+);
+factory!(
+    /// Create a new [`HtmlScript`] element (`<script>`).
+    script, HtmlScript
+);
+factory!(
+    /// Create a new [`HtmlNoscript`] element (`<noscript>`).
+    noscript, HtmlNoscript
+);
+factory!(
+    /// Create a new [`HtmlTemplate`] element (`<template>`).
+    template, HtmlTemplate
+);
+factory!(
+    /// Create a new [`HtmlSlot`] element (`<slot>`).
+    slot, HtmlSlot
+);
 
 #[cfg(test)]
 mod tests {

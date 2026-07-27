@@ -42,10 +42,18 @@ between map interpolations."#),
     stop_color(r#"Color of the stop (default `black`)."#),
     stop_opacity(r#"Opacity of the stop (default `1`)."#));
 
-// Create factories.
-svg_factory!(linear_gradient, SvgLinearGradient);
-svg_factory!(radial_gradient, SvgRadialGradient);
-svg_factory!(stop, SvgStop);
+svg_factory!(
+    /// Create a new [`SvgLinearGradient`] element (`<linearGradient>`).
+    linear_gradient, SvgLinearGradient
+);
+svg_factory!(
+    /// Create a new [`SvgRadialGradient`] element (`<radialGradient>`).
+    radial_gradient, SvgRadialGradient
+);
+svg_factory!(
+    /// Create a new [`SvgStop`] element (`<stop>`).
+    stop, SvgStop
+);
 
 #[cfg(test)]
 mod tests {

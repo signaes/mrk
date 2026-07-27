@@ -366,28 +366,50 @@ One of:
 
 Accepts any valid media query list."#));
 
-// Create a new [`HtmlPicture`] element (`<picture>`).
-factory!(picture, HtmlPicture);
-// Create a new [`HtmlSource`] element (`<source>`).
-factory!(source, HtmlSource);
-// Create a new [`HtmlImg`] element (`<img>`).
-factory!(img, HtmlImg);
-// Create a new [`HtmlIframe`] element (`<iframe>`).
-factory!(iframe, HtmlIframe);
-// Create a new [`HtmlEmbed`] element (`<embed>`).
-factory!(embed, HtmlEmbed);
-// Create a new [`HtmlObject`] element (`<object>`).
-factory!(object, HtmlObject);
-// Create a new [`HtmlVideo`] element (`<video>`).
-factory!(video, HtmlVideo);
-// Create a new [`HtmlAudio`] element (`<audio>`).
-factory!(audio, HtmlAudio);
-// Create a new [`HtmlTrack`] element (`<track>`).
-factory!(track, HtmlTrack);
-// Create a new [`HtmlMap`] element (`<map>`).
-factory!(map, HtmlMap);
-// Create a new [`HtmlArea`] element (`<area>`).
-factory!(area, HtmlArea);
+factory!(
+    /// Create a new [`HtmlPicture`] element (`<picture>`).
+    picture, HtmlPicture
+);
+factory!(
+    /// Create a new [`HtmlSource`] element (`<source>`).
+    source, HtmlSource
+);
+factory!(
+    /// Create a new [`HtmlImg`] element (`<img>`).
+    img, HtmlImg
+);
+factory!(
+    /// Create a new [`HtmlIframe`] element (`<iframe>`).
+    iframe, HtmlIframe
+);
+factory!(
+    /// Create a new [`HtmlEmbed`] element (`<embed>`).
+    embed, HtmlEmbed
+);
+factory!(
+    /// Create a new [`HtmlObject`] element (`<object>`).
+    object, HtmlObject
+);
+factory!(
+    /// Create a new [`HtmlVideo`] element (`<video>`).
+    video, HtmlVideo
+);
+factory!(
+    /// Create a new [`HtmlAudio`] element (`<audio>`).
+    audio, HtmlAudio
+);
+factory!(
+    /// Create a new [`HtmlTrack`] element (`<track>`).
+    track, HtmlTrack
+);
+factory!(
+    /// Create a new [`HtmlMap`] element (`<map>`).
+    map, HtmlMap
+);
+factory!(
+    /// Create a new [`HtmlArea`] element (`<area>`).
+    area, HtmlArea
+);
 
 #[cfg(test)]
 mod tests {

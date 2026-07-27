@@ -153,20 +153,34 @@ Currently one keyword:
 
 The element is render-blocking only when this attribute contains `render`."#));
 
-// Create a new [`HtmlHtml`] element (`<html>`).
-factory!(html, HtmlHtml);
-// Create a new [`HtmlHead`] element (`<head>`).
-factory!(head, HtmlHead);
-// Create a new [`HtmlTitle`] element (`<title>`).
-factory!(title, HtmlTitle);
-// Create a new [`HtmlBase`] element (`<base>`).
-factory!(base, HtmlBase);
-// Create a new [`HtmlLink`] element (`<link>`).
-factory!(link, HtmlLink);
-// Create a new [`HtmlMeta`] element (`<meta>`).
-factory!(meta, HtmlMeta);
-// Create a new [`HtmlStyle`] element (`<style>`).
-factory!(style, HtmlStyle);
+factory!(
+    /// Create a new [`HtmlHtml`] element (`<html>`).
+    html, HtmlHtml
+);
+factory!(
+    /// Create a new [`HtmlHead`] element (`<head>`).
+    head, HtmlHead
+);
+factory!(
+    /// Create a new [`HtmlTitle`] element (`<title>`).
+    title, HtmlTitle
+);
+factory!(
+    /// Create a new [`HtmlBase`] element (`<base>`).
+    base, HtmlBase
+);
+factory!(
+    /// Create a new [`HtmlLink`] element (`<link>`).
+    link, HtmlLink
+);
+factory!(
+    /// Create a new [`HtmlMeta`] element (`<meta>`).
+    meta, HtmlMeta
+);
+factory!(
+    /// Create a new [`HtmlStyle`] element (`<style>`).
+    style, HtmlStyle
+);
 
 #[cfg(test)]
 mod tests {

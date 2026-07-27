@@ -53,34 +53,62 @@ define_html_element!(HtmlFigure, "figure", all);
 define_html_element!(HtmlFigcaption, "figcaption", all);
 define_html_element!(HtmlDiv, "div", all);
 
-// Create a new [`HtmlP`] element (`<p>`).
-factory!(p, HtmlP);
-// Create a new [`HtmlHr`] element (`<hr>`).
-factory!(hr, HtmlHr);
-// Create a new [`HtmlPre`] element (`<pre>`).
-factory!(pre, HtmlPre);
-// Create a new [`HtmlBlockquote`] element (`<blockquote>`).
-factory!(blockquote, HtmlBlockquote);
-// Create a new [`HtmlOl`] element (`<ol>`).
-factory!(ol, HtmlOl);
-// Create a new [`HtmlUl`] element (`<ul>`).
-factory!(ul, HtmlUl);
-// Create a new [`HtmlMenu`] element (`<menu>`).
-factory!(menu, HtmlMenu);
-// Create a new [`HtmlLi`] element (`<li>`).
-factory!(li, HtmlLi);
-// Create a new [`HtmlDl`] element (`<dl>`).
-factory!(dl, HtmlDl);
-// Create a new [`HtmlDt`] element (`<dt>`).
-factory!(dt, HtmlDt);
-// Create a new [`HtmlDd`] element (`<dd>`).
-factory!(dd, HtmlDd);
-// Create a new [`HtmlFigure`] element (`<figure>`).
-factory!(figure, HtmlFigure);
-// Create a new [`HtmlFigcaption`] element (`<figcaption>`).
-factory!(figcaption, HtmlFigcaption);
-// Create a new [`HtmlDiv`] element (`<div>`).
-factory!(div, HtmlDiv);
+factory!(
+    /// Create a new [`HtmlP`] element (`<p>`).
+    p, HtmlP
+);
+factory!(
+    /// Create a new [`HtmlHr`] element (`<hr>`).
+    hr, HtmlHr
+);
+factory!(
+    /// Create a new [`HtmlPre`] element (`<pre>`).
+    pre, HtmlPre
+);
+factory!(
+    /// Create a new [`HtmlBlockquote`] element (`<blockquote>`).
+    blockquote, HtmlBlockquote
+);
+factory!(
+    /// Create a new [`HtmlOl`] element (`<ol>`).
+    ol, HtmlOl
+);
+factory!(
+    /// Create a new [`HtmlUl`] element (`<ul>`).
+    ul, HtmlUl
+);
+factory!(
+    /// Create a new [`HtmlMenu`] element (`<menu>`).
+    menu, HtmlMenu
+);
+factory!(
+    /// Create a new [`HtmlLi`] element (`<li>`).
+    li, HtmlLi
+);
+factory!(
+    /// Create a new [`HtmlDl`] element (`<dl>`).
+    dl, HtmlDl
+);
+factory!(
+    /// Create a new [`HtmlDt`] element (`<dt>`).
+    dt, HtmlDt
+);
+factory!(
+    /// Create a new [`HtmlDd`] element (`<dd>`).
+    dd, HtmlDd
+);
+factory!(
+    /// Create a new [`HtmlFigure`] element (`<figure>`).
+    figure, HtmlFigure
+);
+factory!(
+    /// Create a new [`HtmlFigcaption`] element (`<figcaption>`).
+    figcaption, HtmlFigcaption
+);
+factory!(
+    /// Create a new [`HtmlDiv`] element (`<div>`).
+    div, HtmlDiv
+);
 
 #[cfg(test)]
 mod tests {

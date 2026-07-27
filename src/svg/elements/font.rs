@@ -72,17 +72,46 @@ define_svg_element!(SvgVKern, "vkern",
     g1(r#"Starting glyph range for the first glyph."#),
     g2(r#"Starting glyph range for the second glyph."#));
 
-// Create factories.
-svg_factory!(font, SvgFont);
-svg_factory!(font_face, SvgFontFace);
-svg_factory!(font_face_src, SvgFontFaceSrc);
-svg_factory!(font_face_uri, SvgFontFaceUri);
-svg_factory!(font_face_format, SvgFontFaceFormat);
-svg_factory!(font_face_name, SvgFontFaceName);
-svg_factory!(missing_glyph, SvgMissingGlyph);
-svg_factory!(glyph, SvgGlyph);
-svg_factory!(hkern, SvgHKern);
-svg_factory!(vkern, SvgVKern);
+svg_factory!(
+    /// Create a new [`SvgFont`] element (`<font>`).
+    font, SvgFont
+);
+svg_factory!(
+    /// Create a new [`SvgFontFace`] element (`<font-face>`).
+    font_face, SvgFontFace
+);
+svg_factory!(
+    /// Create a new [`SvgFontFaceSrc`] element (`<font-face-src>`).
+    font_face_src, SvgFontFaceSrc
+);
+svg_factory!(
+    /// Create a new [`SvgFontFaceUri`] element (`<font-face-uri>`).
+    font_face_uri, SvgFontFaceUri
+);
+svg_factory!(
+    /// Create a new [`SvgFontFaceFormat`] element (`<font-face-format>`).
+    font_face_format, SvgFontFaceFormat
+);
+svg_factory!(
+    /// Create a new [`SvgFontFaceName`] element (`<font-face-name>`).
+    font_face_name, SvgFontFaceName
+);
+svg_factory!(
+    /// Create a new [`SvgMissingGlyph`] element (`<missing-glyph>`).
+    missing_glyph, SvgMissingGlyph
+);
+svg_factory!(
+    /// Create a new [`SvgGlyph`] element (`<glyph>`).
+    glyph, SvgGlyph
+);
+svg_factory!(
+    /// Create a new [`SvgHKern`] element (`<hkern>`).
+    hkern, SvgHKern
+);
+svg_factory!(
+    /// Create a new [`SvgVKern`] element (`<vkern>`).
+    vkern, SvgVKern
+);
 
 #[cfg(test)]
 mod tests {

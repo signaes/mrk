@@ -102,64 +102,122 @@ define_html_element!(HtmlSpan, "span", all);
 define_html_element!(HtmlBr, "br", aria_hidden_only);
 define_html_element!(HtmlWbr, "wbr", aria_hidden_only);
 
-// Create a new [`HtmlA`] element (`<a>`).
-factory!(a, HtmlA);
-// Create a new [`HtmlEm`] element (`<em>`).
-factory!(em, HtmlEm);
-// Create a new [`HtmlStrong`] element (`<strong>`).
-factory!(strong, HtmlStrong);
-// Create a new [`HtmlSmall`] element (`<small>`).
-factory!(small, HtmlSmall);
-// Create a new [`HtmlS`] element (`<s>`).
-factory!(s, HtmlS);
-// Create a new [`HtmlCite`] element (`<cite>`).
-factory!(cite, HtmlCite);
-// Create a new [`HtmlQ`] element (`<q>`).
-factory!(q, HtmlQ);
-// Create a new [`HtmlDfn`] element (`<dfn>`).
-factory!(dfn, HtmlDfn);
-// Create a new [`HtmlAbbr`] element (`<abbr>`).
-factory!(abbr, HtmlAbbr);
-// Create a new [`HtmlRuby`] element (`<ruby>`).
-factory!(ruby, HtmlRuby);
-// Create a new [`HtmlRt`] element (`<rt>`).
-factory!(rt, HtmlRt);
-// Create a new [`HtmlRp`] element (`<rp>`).
-factory!(rp, HtmlRp);
-// Create a new [`HtmlData`] element (`<data>`).
-factory!(data, HtmlData);
-// Create a new [`HtmlTime`] element (`<time>`).
-factory!(time, HtmlTime);
-// Create a new [`HtmlCode`] element (`<code>`).
-factory!(code, HtmlCode);
-// Create a new [`HtmlVar`] element (`<var>`).
-factory!(var, HtmlVar);
-// Create a new [`HtmlSamp`] element (`<samp>`).
-factory!(samp, HtmlSamp);
-// Create a new [`HtmlKbd`] element (`<kbd>`).
-factory!(kbd, HtmlKbd);
-// Create a new [`HtmlSub`] element (`<sub>`).
-factory!(sub, HtmlSub);
-// Create a new [`HtmlSup`] element (`<sup>`).
-factory!(sup, HtmlSup);
-// Create a new [`HtmlI`] element (`<i>`).
-factory!(i, HtmlI);
-// Create a new [`HtmlB`] element (`<b>`).
-factory!(b, HtmlB);
-// Create a new [`HtmlU`] element (`<u>`).
-factory!(u, HtmlU);
-// Create a new [`HtmlMark`] element (`<mark>`).
-factory!(mark, HtmlMark);
-// Create a new [`HtmlBdi`] element (`<bdi>`).
-factory!(bdi, HtmlBdi);
-// Create a new [`HtmlBdo`] element (`<bdo>`).
-factory!(bdo, HtmlBdo);
-// Create a new [`HtmlSpan`] element (`<span>`).
-factory!(span, HtmlSpan);
-// Create a new [`HtmlBr`] element (`<br>`).
-factory!(br, HtmlBr);
-// Create a new [`HtmlWbr`] element (`<wbr>`).
-factory!(wbr, HtmlWbr);
+factory!(
+    /// Create a new [`HtmlA`] element (`<a>`).
+    a, HtmlA
+);
+factory!(
+    /// Create a new [`HtmlEm`] element (`<em>`).
+    em, HtmlEm
+);
+factory!(
+    /// Create a new [`HtmlStrong`] element (`<strong>`).
+    strong, HtmlStrong
+);
+factory!(
+    /// Create a new [`HtmlSmall`] element (`<small>`).
+    small, HtmlSmall
+);
+factory!(
+    /// Create a new [`HtmlS`] element (`<s>`).
+    s, HtmlS
+);
+factory!(
+    /// Create a new [`HtmlCite`] element (`<cite>`).
+    cite, HtmlCite
+);
+factory!(
+    /// Create a new [`HtmlQ`] element (`<q>`).
+    q, HtmlQ
+);
+factory!(
+    /// Create a new [`HtmlDfn`] element (`<dfn>`).
+    dfn, HtmlDfn
+);
+factory!(
+    /// Create a new [`HtmlAbbr`] element (`<abbr>`).
+    abbr, HtmlAbbr
+);
+factory!(
+    /// Create a new [`HtmlRuby`] element (`<ruby>`).
+    ruby, HtmlRuby
+);
+factory!(
+    /// Create a new [`HtmlRt`] element (`<rt>`).
+    rt, HtmlRt
+);
+factory!(
+    /// Create a new [`HtmlRp`] element (`<rp>`).
+    rp, HtmlRp
+);
+factory!(
+    /// Create a new [`HtmlData`] element (`<data>`).
+    data, HtmlData
+);
+factory!(
+    /// Create a new [`HtmlTime`] element (`<time>`).
+    time, HtmlTime
+);
+factory!(
+    /// Create a new [`HtmlCode`] element (`<code>`).
+    code, HtmlCode
+);
+factory!(
+    /// Create a new [`HtmlVar`] element (`<var>`).
+    var, HtmlVar
+);
+factory!(
+    /// Create a new [`HtmlSamp`] element (`<samp>`).
+    samp, HtmlSamp
+);
+factory!(
+    /// Create a new [`HtmlKbd`] element (`<kbd>`).
+    kbd, HtmlKbd
+);
+factory!(
+    /// Create a new [`HtmlSub`] element (`<sub>`).
+    sub, HtmlSub
+);
+factory!(
+    /// Create a new [`HtmlSup`] element (`<sup>`).
+    sup, HtmlSup
+);
+factory!(
+    /// Create a new [`HtmlI`] element (`<i>`).
+    i, HtmlI
+);
+factory!(
+    /// Create a new [`HtmlB`] element (`<b>`).
+    b, HtmlB
+);
+factory!(
+    /// Create a new [`HtmlU`] element (`<u>`).
+    u, HtmlU
+);
+factory!(
+    /// Create a new [`HtmlMark`] element (`<mark>`).
+    mark, HtmlMark
+);
+factory!(
+    /// Create a new [`HtmlBdi`] element (`<bdi>`).
+    bdi, HtmlBdi
+);
+factory!(
+    /// Create a new [`HtmlBdo`] element (`<bdo>`).
+    bdo, HtmlBdo
+);
+factory!(
+    /// Create a new [`HtmlSpan`] element (`<span>`).
+    span, HtmlSpan
+);
+factory!(
+    /// Create a new [`HtmlBr`] element (`<br>`).
+    br, HtmlBr
+);
+factory!(
+    /// Create a new [`HtmlWbr`] element (`<wbr>`).
+    wbr, HtmlWbr
+);
 
 #[cfg(test)]
 mod tests {

@@ -82,22 +82,40 @@ Either `auto` (rotate to follow path direction) or `auto-start-reverse`
     preserve_aspect_ratio(r#"Aspect-ratio handling for the marker."#),
     view_box(r#"Internal viewBox of the marker."#));
 
-// Create a new [`SvgSvg`] element (`<svg>`).
-svg_factory!(svg, SvgSvg);
-// Create a new [`SvgG`] element (`<g>`).
-svg_factory!(g, SvgG);
-// Create a new [`SvgDefs`] element (`<defs>`).
-svg_factory!(defs, SvgDefs);
-// Create a new [`SvgSymbol`] element (`<symbol>`).
-svg_factory!(symbol, SvgSymbol);
-// Create a new [`SvgUse`] element (`<use>`).
-svg_factory!(use_, SvgUse);  // Note: `use` is a Rust keyword; the factory is renamed.
-// Create a new [`SvgA`] element (`<a>`).
-svg_factory!(a, SvgA);
-// Create a new [`SvgSwitch`] element (`<switch>`).
-svg_factory!(switch, SvgSwitch);
-// Create a new [`SvgMarker`] element (`<marker>`).
-svg_factory!(marker, SvgMarker);
+svg_factory!(
+    /// Create a new [`SvgSvg`] element (`<svg>`).
+    svg, SvgSvg
+);
+svg_factory!(
+    /// Create a new [`SvgG`] element (`<g>`).
+    g, SvgG
+);
+svg_factory!(
+    /// Create a new [`SvgDefs`] element (`<defs>`).
+    defs, SvgDefs
+);
+svg_factory!(
+    /// Create a new [`SvgSymbol`] element (`<symbol>`).
+    symbol, SvgSymbol
+);
+svg_factory!(
+    /// Create a new [`SvgUse`] element (`<use>`).
+    ///
+    /// Note: `use` is a Rust keyword; the factory is renamed to `use_`.
+    use_, SvgUse
+);
+svg_factory!(
+    /// Create a new [`SvgA`] element (`<a>`).
+    a, SvgA
+);
+svg_factory!(
+    /// Create a new [`SvgSwitch`] element (`<switch>`).
+    switch, SvgSwitch
+);
+svg_factory!(
+    /// Create a new [`SvgMarker`] element (`<marker>`).
+    marker, SvgMarker
+);
 
 #[cfg(test)]
 mod tests {

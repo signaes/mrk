@@ -20,40 +20,74 @@ define_html_element!(HtmlMain, "main", all);
 define_html_element!(HtmlSearch, "search", all);
 define_html_element!(HtmlHgroup, "hgroup", all);
 
-// Create a new [`HtmlBody`] element (`<body>`).
-factory!(body, HtmlBody);
-// Create a new [`HtmlArticle`] element (`<article>`).
-factory!(article, HtmlArticle);
-// Create a new [`HtmlSection`] element (`<section>`).
-factory!(section, HtmlSection);
-// Create a new [`HtmlNav`] element (`<nav>`).
-factory!(nav, HtmlNav);
-// Create a new [`HtmlAside`] element (`<aside>`).
-factory!(aside, HtmlAside);
-// Create a new [`HtmlH1`] element (`<h1>`).
-factory!(h1, HtmlH1);
-// Create a new [`HtmlH2`] element (`<h2>`).
-factory!(h2, HtmlH2);
-// Create a new [`HtmlH3`] element (`<h3>`).
-factory!(h3, HtmlH3);
-// Create a new [`HtmlH4`] element (`<h4>`).
-factory!(h4, HtmlH4);
-// Create a new [`HtmlH5`] element (`<h5>`).
-factory!(h5, HtmlH5);
-// Create a new [`HtmlH6`] element (`<h6>`).
-factory!(h6, HtmlH6);
-// Create a new [`HtmlHeader`] element (`<header>`).
-factory!(header, HtmlHeader);
-// Create a new [`HtmlFooter`] element (`<footer>`).
-factory!(footer, HtmlFooter);
-// Create a new [`HtmlAddress`] element (`<address>`).
-factory!(address, HtmlAddress);
-// Create a new [`HtmlMain`] element (`<main>`).
-factory!(main, HtmlMain);
-// Create a new [`HtmlSearch`] element (`<search>`).
-factory!(search, HtmlSearch);
-// Create a new [`HtmlHgroup`] element (`<hgroup>`).
-factory!(hgroup, HtmlHgroup);
+factory!(
+    /// Create a new [`HtmlBody`] element (`<body>`).
+    body, HtmlBody
+);
+factory!(
+    /// Create a new [`HtmlArticle`] element (`<article>`).
+    article, HtmlArticle
+);
+factory!(
+    /// Create a new [`HtmlSection`] element (`<section>`).
+    section, HtmlSection
+);
+factory!(
+    /// Create a new [`HtmlNav`] element (`<nav>`).
+    nav, HtmlNav
+);
+factory!(
+    /// Create a new [`HtmlAside`] element (`<aside>`).
+    aside, HtmlAside
+);
+factory!(
+    /// Create a new [`HtmlH1`] element (`<h1>`).
+    h1, HtmlH1
+);
+factory!(
+    /// Create a new [`HtmlH2`] element (`<h2>`).
+    h2, HtmlH2
+);
+factory!(
+    /// Create a new [`HtmlH3`] element (`<h3>`).
+    h3, HtmlH3
+);
+factory!(
+    /// Create a new [`HtmlH4`] element (`<h4>`).
+    h4, HtmlH4
+);
+factory!(
+    /// Create a new [`HtmlH5`] element (`<h5>`).
+    h5, HtmlH5
+);
+factory!(
+    /// Create a new [`HtmlH6`] element (`<h6>`).
+    h6, HtmlH6
+);
+factory!(
+    /// Create a new [`HtmlHeader`] element (`<header>`).
+    header, HtmlHeader
+);
+factory!(
+    /// Create a new [`HtmlFooter`] element (`<footer>`).
+    footer, HtmlFooter
+);
+factory!(
+    /// Create a new [`HtmlAddress`] element (`<address>`).
+    address, HtmlAddress
+);
+factory!(
+    /// Create a new [`HtmlMain`] element (`<main>`).
+    main, HtmlMain
+);
+factory!(
+    /// Create a new [`HtmlSearch`] element (`<search>`).
+    search, HtmlSearch
+);
+factory!(
+    /// Create a new [`HtmlHgroup`] element (`<hgroup>`).
+    hgroup, HtmlHgroup
+);
 
 #[cfg(test)]
 mod tests {

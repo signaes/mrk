@@ -17,10 +17,14 @@ Typical use: a changelog entry, ticket, or revision that justifies the edit."#),
 
 Machine-readable; rendered text is what the user sees."#));
 
-// Create a new [`HtmlIns`] element (`<ins>`).
-factory!(ins, HtmlIns);
-// Create a new [`HtmlDel`] element (`<del>`).
-factory!(del, HtmlDel);
+factory!(
+    /// Create a new [`HtmlIns`] element (`<ins>`).
+    ins, HtmlIns
+);
+factory!(
+    /// Create a new [`HtmlDel`] element (`<del>`).
+    del, HtmlDel
+);
 
 #[cfg(test)]
 mod tests {
