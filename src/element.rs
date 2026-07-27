@@ -1,23 +1,49 @@
+//! The core in-memory element: tag name + attributes + children.
+//!
+//! Use [`el`] (or [`Element::new`]) to construct, then chain
+//! `.attrs(...)` and `.children(...)`. For pure-HTML trees, the
+//! `html` feature adds 114 tag-specific factories (e.g. `div()`, `p()`).
+//!
+//! ```
+//! use mrk::*;
+//!
+//! let link = el("a")
+//!     .attrs(vec![attr("href").value("/home")])
+//!     .children(nodes!["Home"]);
+//! ```
+
 use crate::attributes::Attribute;
 use crate::node::Node;
+use std::borrow::Cow;
 
-#[derive(Debug)]
+/// A markup element: name, attributes, children.
+///
+/// Plain struct with three fields so it composes cleanly with
+/// [`Node::Element`](crate::Node::Element). The conventional
+/// builders live on [`Element`] itself.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Element {
-    pub name: &'static str,
+    /// Tag name (e.g. `"div"`, `"custom-tag"`). `Cow::Borrowed` for
+    /// literals, `Cow::Owned` for runtime strings.
+    pub name: Cow<'static, str>,
+    /// Attributes in source order.
     pub attributes: Vec<Attribute>,
+    /// Child nodes (text, raw HTML, or nested elements).
     pub children: Vec<Node>,
 }
 
 impl Element {
-    pub fn new(name: &'static str) -> Self {
+    /// Construct an empty element with `name` and no attributes or
+    /// children.
+    pub fn new(name: impl Into<Cow<'static, str>>) -> Self {
         Element {
-            name,
+            name: name.into(),
             attributes: vec![],
             children: vec![],
         }
     }
 
-    /// Sets the element's attributes, replacing any previously set.
+    /// Set the element's attributes, replacing any previously set.
     ///
     /// # Example
     ///
@@ -32,7 +58,7 @@ impl Element {
         self
     }
 
-    /// Sets the element's children, replacing any previously set.
+    /// Set the element's children, replacing any previously set.
     ///
     /// Use the `nodes!` macro to build the children list with mixed
     /// strings and elements:
@@ -51,7 +77,9 @@ impl Element {
     }
 }
 
-pub fn el(name: &'static str) -> Element {
+/// Construct an empty element with `name`. Convenience wrapper for
+/// [`Element::new`].
+pub fn el(name: impl Into<Cow<'static, str>>) -> Element {
     Element::new(name)
 }
 
@@ -83,7 +111,7 @@ mod tests {
     #[test]
     fn struct_literal_construction() {
         let e = Element {
-            name: "custom",
+            name: Cow::Borrowed("custom"),
             attributes: vec![],
             children: vec![],
         };
@@ -103,5 +131,12 @@ mod tests {
     fn debug_format() {
         let e = el("div");
         let _ = format!("{:?}", e);
+    }
+
+    #[test]
+    fn el_accepts_owned_string() {
+        let dynamic = String::from("dyn");
+        let e = el(dynamic);
+        assert_eq!(e.name, "dyn");
     }
 }

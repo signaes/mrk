@@ -2,47 +2,105 @@
 
 use super::macros::{define_html_element, factory};
 
-define_html_element!(HtmlA, "a",
-    href("URL of the hyperlink."),
-    target("Frame target for the link."),
-    rel("Relationship to the linked resource."),
-    hreflang("Language of the linked resource."),
-    type_attr("MIME type of the linked resource."),
-    download("Filename for downloading the link."),
-    ping("URLs to ping when the link is clicked."),
-    referrerpolicy("Referrer policy for the request."),
-    shape("Area shape for image map links."),
-    coords("Area coordinates for image map links."));
-define_html_element!(HtmlEm, "em");
-define_html_element!(HtmlStrong, "strong");
-define_html_element!(HtmlSmall, "small");
-define_html_element!(HtmlS, "s");
-define_html_element!(HtmlCite, "cite");
-define_html_element!(HtmlQ, "q", cite("URL of the source of the quotation."));
-define_html_element!(HtmlDfn, "dfn");
-define_html_element!(HtmlAbbr, "abbr", title_attr("Full expansion of the abbreviation."));
-define_html_element!(HtmlRuby, "ruby");
-define_html_element!(HtmlRt, "rt");
-define_html_element!(HtmlRp, "rp");
-define_html_element!(HtmlRtc, "rtc");
-define_html_element!(HtmlRb, "rb");
-define_html_element!(HtmlData, "data", value("Machine-readable value."));
-define_html_element!(HtmlTime, "time", datetime("Machine-readable date/time value."));
-define_html_element!(HtmlCode, "code");
-define_html_element!(HtmlVar, "var");
-define_html_element!(HtmlSamp, "samp");
-define_html_element!(HtmlKbd, "kbd");
-define_html_element!(HtmlSub, "sub");
-define_html_element!(HtmlSup, "sup");
-define_html_element!(HtmlI, "i");
-define_html_element!(HtmlB, "b");
-define_html_element!(HtmlU, "u");
-define_html_element!(HtmlMark, "mark");
-define_html_element!(HtmlBdi, "bdi");
-define_html_element!(HtmlBdo, "bdo");
-define_html_element!(HtmlSpan, "span");
-define_html_element!(HtmlBr, "br");
-define_html_element!(HtmlWbr, "wbr");
+define_html_element!(HtmlA, "a", all,
+    href(r#"URL the link points to.
+
+If absent, the `<a>` element is a placeholder hyperlink; it does not navigate. May be a relative URL, an absolute URL, a fragment identifier (`#id`), or a `mailto:`/`tel:`/etc. URL."#),
+    target(r#"Browsing context for the linked resource.
+
+One of:
+- `_self` (default)
+- `_blank`
+- `_parent`
+- `_top`
+- a navigable target name
+
+`target="_blank"` on user-supplied links is a tabnabbing risk; pair it with `rel="noopener noreferrer"`."#),
+    rel(r#"Relationship between the current document and the linked resource.
+
+A space-separated list of link types. Common values:
+- `alternate`
+- `author`
+- `bookmark`
+- `external`
+- `help`
+- `license`
+- `next`
+- `nofollow`
+- `noopener`
+- `noreferrer`
+- `prev`
+- `search`
+- `tag`
+
+`noopener` and `noreferrer` are recommended for `target="_blank"`."#),
+    hreflang(r#"Language of the linked resource as a BCP 47 language tag (e.g. `en`, `en-US`).
+
+For use with the `hreflang` hint; user agents may use it for accessibility or rendering decisions."#),
+    type_attr(r#"Hint for the MIME type of the linked resource (e.g. `text/html`, `application/pdf`).
+
+User agents may use this to skip fetching a resource that they know they cannot handle. Not a definitive statement of the resource's type."#),
+    download(r#"If present, the linked resource is downloaded instead of navigated to. The value, if provided, suggests the filename.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Same-origin URLs are required for non-empty filenames; cross-origin downloads are typically ignored by browsers."#),
+    ping(r#"Space-separated list of URLs to ping with a `POST` request when the link is followed.
+
+Used for click-through tracking. Pings are sent in the background, do not block navigation, and are subject to referrer policy."#),
+    referrerpolicy(r#"Referrer policy for the request.
+
+One of:
+- `no-referrer`
+- `no-referrer-when-downgrade`
+- `same-origin`
+- `origin`
+- `strict-origin`
+- `origin-when-cross-origin`
+- `strict-origin-when-cross-origin`
+- `unsafe-url`"#));
+define_html_element!(HtmlEm, "em", all);
+define_html_element!(HtmlStrong, "strong", all);
+define_html_element!(HtmlSmall, "small", all);
+define_html_element!(HtmlS, "s", all);
+define_html_element!(HtmlCite, "cite", all);
+define_html_element!(HtmlQ, "q", all, cite(r#"URL of the source being quoted or referenced.
+
+A citation for the quotation, exposed to assistive technologies and used by browsers to offer a "go to citation" affordance."#));
+define_html_element!(HtmlDfn, "dfn", all);
+define_html_element!(HtmlAbbr, "abbr", all, title_attr(r#"Full expansion of the abbreviation.
+
+A human-readable expansion of the term. Optional; if absent, the abbreviation is expanded only when explicitly defined (e.g. by a surrounding `<dfn>`)."#));
+define_html_element!(HtmlRuby, "ruby", all);
+define_html_element!(HtmlRt, "rt", all);
+define_html_element!(HtmlRp, "rp", all);
+define_html_element!(HtmlData, "data", all, value(r#"Machine-readable equivalent of the element's contents.
+
+A string that the script or application can read from the `value` IDL property. The visible text is the element's child content."#));
+define_html_element!(HtmlTime, "time", all, datetime(r#"Machine-readable equivalent of the element's contents, as a global date or global date-time string.
+
+Valid forms include:
+- A valid date string (e.g. `2025-01-15`)
+- A valid time string (e.g. `13:45:00`)
+- A valid local date-time string (e.g. `2025-01-15T13:45`)
+- A valid global date-time string (e.g. `2025-01-15T13:45:00Z` or `2025-01-15T13:45:00+02:00`)
+- A valid duration string (e.g. `P3DT4H`)
+- A week string (e.g. `2025-W03`)
+
+If absent, the element's text content is parsed instead."#));
+define_html_element!(HtmlCode, "code", all);
+define_html_element!(HtmlVar, "var", all);
+define_html_element!(HtmlSamp, "samp", all);
+define_html_element!(HtmlKbd, "kbd", all);
+define_html_element!(HtmlSub, "sub", all);
+define_html_element!(HtmlSup, "sup", all);
+define_html_element!(HtmlI, "i", all);
+define_html_element!(HtmlB, "b", all);
+define_html_element!(HtmlU, "u", all);
+define_html_element!(HtmlMark, "mark", all);
+define_html_element!(HtmlBdi, "bdi", all);
+define_html_element!(HtmlBdo, "bdo", all);
+define_html_element!(HtmlSpan, "span", all);
+define_html_element!(HtmlBr, "br", aria_hidden_only);
+define_html_element!(HtmlWbr, "wbr", aria_hidden_only);
 
 // Create a new [`HtmlA`] element (`<a>`).
 factory!(a, HtmlA);
@@ -68,10 +126,6 @@ factory!(ruby, HtmlRuby);
 factory!(rt, HtmlRt);
 // Create a new [`HtmlRp`] element (`<rp>`).
 factory!(rp, HtmlRp);
-// Create a new [`HtmlRtc`] element (`<rtc>`).
-factory!(rtc, HtmlRtc);
-// Create a new [`HtmlRb`] element (`<rb>`).
-factory!(rb, HtmlRb);
 // Create a new [`HtmlData`] element (`<data>`).
 factory!(data, HtmlData);
 // Create a new [`HtmlTime`] element (`<time>`).
@@ -121,8 +175,6 @@ mod tests {
         assert_eq!(a().download("file.txt").render(), r#"<a download="file.txt"></a>"#);
         assert_eq!(a().ping("/track").render(), r#"<a ping="/track"></a>"#);
         assert_eq!(a().referrerpolicy("no-referrer").render(), r#"<a referrerpolicy="no-referrer"></a>"#);
-        assert_eq!(a().shape("rect").render(), r#"<a shape="rect"></a>"#);
-        assert_eq!(a().coords("0,0,100,100").render(), r#"<a coords="0,0,100,100"></a>"#);
     }
 
     #[test]
@@ -178,16 +230,6 @@ mod tests {
     #[test]
     fn rp_element() {
         assert_eq!(rp().render(), "<rp></rp>");
-    }
-
-    #[test]
-    fn rtc_element() {
-        assert_eq!(rtc().render(), "<rtc></rtc>");
-    }
-
-    #[test]
-    fn rb_element() {
-        assert_eq!(rb().render(), "<rb></rb>");
     }
 
     #[test]

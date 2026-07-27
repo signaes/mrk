@@ -19,10 +19,8 @@
 //!     .render();
 //! ```
 
-mod constants;
 mod elements;
 mod raw;
-mod render;
 
 pub use elements::*;
 pub use raw::Raw;

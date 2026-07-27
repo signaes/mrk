@@ -1,7 +1,20 @@
+//! The three runtime flavors of node content: escaped text, nested
+//! element, or unescaped raw HTML.
+//!
+//! A [`Node`] is what lives inside an
+//! [`Element::children`](crate::Element::children). The `nodes!` macro
+//! accepts strings (→ `Node::Text`), nested [`Element`]s (→
+//! `Node::Element`), [`Raw`](crate::html::Raw) HTML (→ `Node::Raw`),
+//! and existing [`Node`]s (pass-through).
+//!
+//! With the `html` feature, `Raw::str("<b>bold</b>")` produces a
+//! `Node::Raw` for trusted prebuilt HTML.
+
 use crate::element::Element;
 use std::borrow::Cow;
 
-#[derive(Debug)]
+/// A single child of an element.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Node {
     /// Escaped text content. Special HTML chars (`<`, `>`, `&`, `"`) are
     /// replaced with their entity equivalents when rendered.
@@ -66,5 +79,31 @@ mod tests {
     fn debug_format() {
         let n: Node = "hello".into();
         let _ = format!("{:?}", n);
+    }
+
+    /// `Display`-based tests for `Node`: the `Display` impl lives in
+    /// `crate::ir::display`, gated on the `ir` Cargo feature.
+    #[cfg(feature = "ir")]
+    mod display_tests {
+        use super::*;
+
+        #[test]
+        fn to_string_text() {
+            let n: Node = "hello".into();
+            assert_eq!(format!("{}", n), "hello");
+        }
+
+        #[test]
+        fn to_string_raw() {
+            let n = Node::Raw("<br/>".into());
+            assert_eq!(format!("{}", n), "<br/>");
+        }
+
+        #[test]
+        fn to_string_element() {
+            let n: Node = el("div").into();
+            let s = format!("{}", n);
+            assert!(s.starts_with("mrk1\n"));
+        }
     }
 }

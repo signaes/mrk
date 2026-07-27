@@ -2,100 +2,369 @@
 
 use super::macros::{define_html_element, factory};
 
-define_html_element!(HtmlPicture, "picture");
-define_html_element!(HtmlSource, "source",
-    type_attr("MIME type of the resource."),
-    media("Target media query."),
-    src("URL of the resource."),
-    srcset("Image sources for responsive images."),
-    sizes("Image sizes for responsive images."),
-    width("Display width in pixels."),
-    height("Display height in pixels."));
-define_html_element!(HtmlImg, "img",
-    src("URL of the image."),
-    alt("Alternative text description."),
-    width("Display width in pixels."),
-    height("Display height in pixels."),
-    loading("Loading behavior (lazy or eager)."),
-    decoding("Image decoding hint (async, sync, or auto)."),
-    fetchpriority("Fetch priority hint (high, low, or auto)."),
-    referrerpolicy("Referrer policy for the request."),
-    sizes("Image sizes for responsive images."),
-    srcset("Image sources for responsive images."),
-    crossorigin("CORS setting (anonymous or use-credentials)."),
-    usemap("Name of the image map to use."),
-    ismap("Whether the image is a server-side image map."),
-    longdesc("URL of a long description of the image."));
-define_html_element!(HtmlIframe, "iframe",
-    src("URL of the embedded page."),
-    srcdoc("Inline HTML to display."),
-    name("Frame name for targeting."),
-    width("Display width in pixels."),
-    height("Display height in pixels."),
-    loading("Loading behavior (lazy or eager)."),
-    referrerpolicy("Referrer policy for the request."),
-    sandbox("Permissions policy for the iframe."),
-    allow("Feature policy for the iframe."),
-    allowfullscreen("Whether fullscreen is allowed."),
-    allowpaymentrequest("Whether payment API is allowed."),
-    credentialless("Whether to send credentials."),
-    csp("Content Security Policy for the iframe."));
-define_html_element!(HtmlEmbed, "embed",
-    src("URL of the embedded content."),
-    type_attr("MIME type of the content."),
-    width("Display width in pixels."),
-    height("Display height in pixels."));
-define_html_element!(HtmlObject, "object",
-    data("URL of the resource."),
-    type_attr("MIME type of the resource."),
-    name("Object name for form submission."),
-    form("Associated form ID."),
-    width("Display width in pixels."),
-    height("Display height in pixels."),
-    typemustmatch("Whether the type must match the resource."));
-define_html_element!(HtmlParam, "param",
-    name("Parameter name."),
-    value("Parameter value."));
-define_html_element!(HtmlVideo, "video",
-    src("URL of the video source."),
-    poster("URL of the poster image."),
-    controls("Whether to show media controls."),
-    autoplay("Whether to play automatically."),
-    loop_attr("Whether to loop."),
-    muted("Whether to mute audio."),
-    preload("Preload behavior (auto, metadata, or none)."),
-    width("Display width in pixels."),
-    height("Display height in pixels."),
-    playsinline("Whether to play inline on mobile."),
-    crossorigin("CORS setting."));
-define_html_element!(HtmlAudio, "audio",
-    src("URL of the audio source."),
-    controls("Whether to show media controls."),
-    autoplay("Whether to play automatically."),
-    loop_attr("Whether to loop."),
-    muted("Whether to mute audio."),
-    preload("Preload behavior (auto, metadata, or none)."),
-    crossorigin("CORS setting."));
-define_html_element!(HtmlTrack, "track",
-    src("URL of the subtitle file."),
-    kind("Kind of track (subtitles, captions, etc.)."),
-    srclang("Language of the track."),
-    label("Track label for user display."),
-    default_attr("Whether the track is enabled by default."));
-define_html_element!(HtmlMap, "map", name("Name of the image map."));
-define_html_element!(HtmlArea, "area",
-    alt("Alternative text for the area."),
-    coords("Coordinates of the area."),
-    shape("Shape of the area (rect, circle, poly)."),
-    href("URL of the area."),
-    target("Frame target for the link."),
-    rel("Relationship to the linked resource."),
-    download("Filename for downloading the link."),
-    ping("URLs to ping when the link is clicked."),
-    referrerpolicy("Referrer policy for the request."),
-    type_attr("MIME type of the linked resource."),
-    media("Target media query."));
-define_html_element!(HtmlPortal, "portal");
+define_html_element!(HtmlPicture, "picture", aria_hidden_only);
+define_html_element!(HtmlSource, "source", no_aria,
+    type_attr(r#"MIME type of the resource.
+
+For `<source>` inside `<picture>`: a MIME type or `image/*` wildcard, used to filter matching images.
+For `<source>` inside `<video>` or `<audio>`: a MIME type with optional codecs (e.g. `video/mp4; codecs="avc1.42E01E"`)."#),
+    media(r#"Media query list (e.g. `screen`, `(min-width: 800px)`).
+
+For `<picture>` sources: matches the user's environment. The first matching source is selected.
+For media sources: informational; not all browsers apply it.
+
+Accepts any valid media query list."#),
+    src(r#"URL of the resource.
+
+For `<picture>`: typically combined with `srcset` and `sizes` via the `srcset`/`sizes` attributes rather than `src`.
+For `<video>` / `<audio>`: the source media URL."#),
+    srcset(r#"Source set for responsive images.
+
+Comma-separated list of `<url> <descriptor>` pairs. Each entry may use width descriptors (`small.webp 480w`) or pixel-density descriptors (`small.webp 1x, large.webp 2x`).
+
+Used with `sizes` to select a source for the current viewport."#),
+    sizes(r#"Sizes for the responsive image source set.
+
+Comma-separated list of media-condition / source-size pairs (e.g. `(max-width: 600px) 100vw, 50vw`). Describes the intended display width of the image for the user agent to pick a source from `srcset`."#),
+    width(r#"Display width of the image in CSS pixels (a valid non-negative integer).
+
+For `<picture>` and `<source>`, the `width` attribute is a hint."#),
+    height(r#"Display height of the image in CSS pixels (a valid non-negative integer).
+
+For `<picture>` and `<source>`, the `height` attribute is a hint."#));
+define_html_element!(HtmlImg, "img", all,
+    src(r#"URL of the image to embed.
+
+Required for image fetches. A data URL or blob URL is also allowed."#),
+    alt(r#"Alternative text describing the image, used by screen readers, search engines, and shown when the image cannot be loaded.
+
+Must be a non-empty string for `<img>` (except in a small set of decorative cases where `alt=""` is intentional). For images that contain text, the text should be included."#),
+    width(r#"Rendered width of the image in CSS pixels (a valid non-negative integer).
+
+Affects the image's intrinsic size and the aspect ratio used to reserve layout space before the image loads."#),
+    height(r#"Rendered height of the image in CSS pixels (a valid non-negative integer).
+
+Affects the image's intrinsic size and the aspect ratio used to reserve layout space before the image loads."#),
+    loading(r#"Hint for when the user agent should begin loading the image.
+
+One of:
+- `eager` (default; load immediately)
+- `lazy` (defer until the image is near the viewport)"#),
+    decoding(r#"Hint for how the user agent should decode the image.
+
+One of:
+- `sync` (decode synchronously, blocking other work)
+- `async` (decode asynchronously)
+- `auto` (no preference; user-agent decides)"#),
+    fetchpriority(r#"Hint for the relative fetch priority of the image request.
+
+One of:
+- `high`
+- `low`
+- `auto` (default)"#),
+    referrerpolicy(r#"Referrer policy for the request.
+
+One of:
+- `no-referrer`
+- `no-referrer-when-downgrade`
+- `same-origin`
+- `origin`
+- `strict-origin`
+- `origin-when-cross-origin`
+- `strict-origin-when-cross-origin`
+- `unsafe-url`"#),
+    sizes(r#"Sizes for the responsive image source set.
+
+Comma-separated list of media-condition / source-size pairs (e.g. `(max-width: 600px) 100vw, 50vw`)."#),
+    srcset(r#"Source set for responsive images.
+
+Comma-separated list of `<url> <descriptor>` pairs (e.g. `small.webp 480w, large.webp 1080w`)."#),
+    crossorigin(r#"CORS setting for the image request.
+
+One of:
+- `anonymous`
+- `use-credentials`
+
+Required for canvas pixel access to images from foreign origins."#),
+    usemap(r#"Name of the `<map>` element to associate with this image, prefixed with `#` (e.g. `#nav-map`).
+
+The referenced `<map>` defines clickable regions via `<area>` children."#),
+    ismap(r#"Boolean attribute. When present, the image is a server-side image map: clicks submit the click coordinates as query parameters on the parent `<a>`'s href.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#));
+define_html_element!(HtmlIframe, "iframe", all,
+    src(r#"URL of the page to embed.
+
+Used to load a navigable into the frame. Combine with `sandbox` and `referrerpolicy` to control the embedded content's permissions."#),
+    srcdoc(r#"Inline HTML to display as the frame's content.
+
+Takes precedence over `src` when present. Authoring the document means authoring a complete document (with `<html>`, `<head>`, `<body>`). Use `%22` and `%23` to escape embedded quotes for safe embedding."#),
+    name(r#"Name of the frame, used as a target for hyperlinks and forms (e.g. `<a target="myframe">`).
+
+Must be a valid browsing-context name (a string of 1+ ASCII letters, digits, or hyphens, not starting with a digit; or one of the reserved keywords `_blank`, `_self`, `_parent`, `_top`)."#),
+    width(r#"Rendered width of the frame in CSS pixels (a valid non-negative integer; default `300`)."#),
+    height(r#"Rendered height of the frame in CSS pixels (a valid non-negative integer; default `150`)."#),
+    loading(r#"Hint for when the user agent should begin loading the frame.
+
+One of:
+- `eager` (default; load immediately)
+- `lazy` (defer until near the viewport)"#),
+    referrerpolicy(r#"Referrer policy for the iframe request.
+
+One of:
+- `no-referrer`
+- `no-referrer-when-downgrade`
+- `same-origin`
+- `origin`
+- `strict-origin`
+- `origin-when-cross-origin`
+- `strict-origin-when-cross-origin`
+- `unsafe-url`"#),
+    sandbox(r#"Permissions policy for the frame's content.
+
+A space-separated list of sandbox tokens. Each token re-enables a feature that is otherwise restricted in the sandbox:
+- `allow-downloads`
+- `allow-forms`
+- `allow-modals`
+- `allow-orientation-lock`
+- `allow-pointer-lock`
+- `allow-popups`
+- `allow-popups-to-escape-sandbox`
+- `allow-presentation`
+- `allow-same-origin`
+- `allow-scripts`
+- `allow-top-navigation`
+- `allow-top-navigation-by-user-activation`
+- `allow-top-navigation-to-custom-protocols`
+
+If the attribute is absent (or empty), the frame is fully sandboxed: same-origin is denied, scripts cannot run, and forms cannot be submitted."#),
+    allow(r#"Permissions Policy feature allowlist for the embedded document.
+
+A semicolon-separated list of `feature-name 'src'` (or `feature-name 'src' 'src'` for multiple origins) entries:
+- `accelerometer`
+- `ambient-light-sensor`
+- `autoplay`
+- `battery`
+- `camera`
+- `display-capture`
+- `document-domain`
+- `encrypted-media`
+- `execution-while-not-rendered`
+- `execution-while-out-of-viewport`
+- `fullscreen`
+- `gamepad`
+- `geolocation`
+- `gyroscope`
+- `hid`
+- `identity-credentials-get`
+- `idle-detection`
+- `local-fonts`
+- `magnetometer`
+- `microphone`
+- `midi`
+- `otp-credentials`
+- `payment`
+- `picture-in-picture`
+- `publickey-credentials-create`
+- `publickey-credentials-get`
+- `screen-wake-lock`
+- `serial`
+- `speaker-selection`
+- `storage-access`
+- `usb`
+- `web-share`
+- `window-management`
+- `xr-spatial-tracking`
+
+Example: `camera 'self'; microphone https://other.example`."#),
+    allowfullscreen(r#"Boolean attribute. When present, allows the embedded document to call `requestFullscreen()`.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. The Permissions Policy `allow="fullscreen"` attribute is the modern replacement."#),
+    credentialless(r#"Boolean attribute. When present, the iframe loads without any user credentials, cookies, or storage sent with requests. The origin is anonymized so it cannot be used to access cross-origin partitioned storage.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    csp(r#"Content Security Policy applied to the embedded document.
+
+A Content Security Policy string (the same syntax as an HTTP `Content-Security-Policy` header). The policy is enforced in addition to any other policy the document is delivered with."#));
+define_html_element!(HtmlEmbed, "embed", all,
+    src(r#"URL of the embedded resource.
+
+The type of the resource is determined by the optional `type` attribute."#),
+    type_attr(r#"MIME type of the embedded resource (e.g. `application/pdf`, `image/svg+xml`).
+
+Used to select a plugin; the resource at `src` is rendered with a plugin matching this type."#),
+    width(r#"Display width in CSS pixels (a valid non-negative integer)."#),
+    height(r#"Display height in CSS pixels (a valid non-negative integer)."#));
+define_html_element!(HtmlObject, "object", all,
+    data(r#"URL of the resource.
+
+Specify a `type` attribute when the type cannot be inferred reliably from the URL, to help the user agent pick a plugin before fetching."#),
+    type_attr(r#"MIME type of the resource referenced by `data`.
+
+Used to help the user agent select a plugin without downloading the resource first."#),
+    name(r#"Name of the object, submitted with the form as part of the name/value pair.
+
+Used for form-associated objects."#),
+    form(r#"ID of the `<form>` element to associate this object with.
+
+Allows `<object>` to participate in form submission even when not nested inside the form."#),
+    width(r#"Display width in CSS pixels (a valid non-negative integer)."#),
+    height(r#"Display height in CSS pixels (a valid non-negative integer)."#));
+define_html_element!(HtmlVideo, "video", all,
+    src(r#"URL of the video to play.
+
+An alternative to nesting `<source>` elements, which is preferred for serving multiple formats or fallbacks."#),
+    poster(r#"URL of an image to display before the video starts playing.
+
+A typical use is a thumbnail or "play" overlay."#),
+    controls(r#"Boolean attribute. When present, the user agent displays its default media controls (play, pause, volume, fullscreen, etc.).
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    autoplay(r#"Boolean attribute. When present, the media begins playback as soon as it can do so without stopping.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Many browsers restrict autoplay to muted media or require user activation."#),
+    loop_attr(r#"Boolean attribute. When present, the media automatically seeks back to the start after reaching the end.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    muted(r#"Boolean attribute. When present, the audio output is silenced by default.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Required for autoplay in many browsers."#),
+    preload(r#"Hint for how aggressively the user agent should preload the media.
+
+One of:
+- `none` (do not preload; the user is not expected to need it)
+- `metadata` (preload only metadata, e.g. duration and dimensions)
+- `auto` (the user agent may preload the whole media)
+
+The attribute is ignored when `autoplay` is present."#),
+    width(r#"Display width in CSS pixels (a valid non-negative integer)."#),
+    height(r#"Display height in CSS pixels (a valid non-negative integer)."#),
+    playsinline(r#"Boolean attribute. When present, hints that the video should play inline (within the page) rather than entering the platform's native fullscreen player on iOS.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    crossorigin(r#"CORS setting for the video request.
+
+One of:
+- `anonymous`
+- `use-credentials`
+
+Required to use the video with `<canvas>` in a non-CORS-disabled way."#));
+define_html_element!(HtmlAudio, "audio", all,
+    src(r#"URL of the audio to play.
+
+An alternative to nesting `<source>` elements."#),
+    controls(r#"Boolean attribute. When present, the user agent displays its default media controls.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    autoplay(r#"Boolean attribute. When present, audio playback begins as soon as it can without stopping.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Many browsers restrict autoplay to muted media or require user activation."#),
+    loop_attr(r#"Boolean attribute. When present, audio automatically seeks back to the start after reaching the end.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    muted(r#"Boolean attribute. When present, the audio output is silenced by default.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Required for autoplay in many browsers."#),
+    preload(r#"Hint for how aggressively the user agent should preload the media.
+
+One of:
+- `none` (do not preload)
+- `metadata` (preload only metadata)
+- `auto` (the user agent may preload the whole media)
+
+Ignored when `autoplay` is present."#),
+    crossorigin(r#"CORS setting for the audio request.
+
+One of:
+- `anonymous`
+- `use-credentials`"#));
+define_html_element!(HtmlTrack, "track", aria_hidden_only,
+    src(r#"URL of the track file (e.g. a WebVTT `.vtt` file for subtitles or captions)."#),
+    kind(r#"Type of text track.
+
+One of:
+- `subtitles` (translation; default)
+- `captions` (transcription of dialog and important sounds)
+- `descriptions` (audio description of visual content)
+- `chapters` (chapter titles, navigable)
+- `metadata` (script-only data, not shown to the user)"#),
+    srclang(r#"Language of the track text as a BCP 47 language tag (e.g. `en`, `fr`).
+
+Required when `kind` is `subtitles`."#),
+    label(r#"User-visible title for the track; shown in the user agent's caption picker."#),
+    default_attr(r#"Boolean attribute. When present, the track is enabled by default if the user has not chosen another.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one `<track>` per media element may have this attribute."#));
+define_html_element!(HtmlMap, "map", no_aria, name(r##"Name of the image map.
+
+Referenced by `usemap` on an `<img>` or `<object>` with a leading `#` (e.g. `usemap="#nav-map"`). The name must be unique and not empty."##));
+define_html_element!(HtmlArea, "area", all,
+    alt(r#"Alternative text for the area.
+
+Required when `href` is present; describes the link's destination for screen readers and is shown when the image cannot be loaded."#),
+    coords(r#"Coordinates of the area, expressed as a comma-separated list of integers.
+
+The number and meaning of the values depends on the `shape` attribute:
+- `rect`: `x1, y1, x2, y2` (in CSS pixels from the image origin)
+- `circle`: `x, y, radius`
+- `poly`: `x1, y1, x2, y2, ..., xn, yn` (at least 6 values)
+- `default`: the entire image; no coordinates"#),
+    shape(r#"Shape of the clickable area.
+
+One of:
+- `rect` (rectangle; default)
+- `circle`
+- `poly` (polygon)
+- `default` (the entire image beyond any other `<area>`)"#),
+    href(r#"URL the area links to.
+
+If absent, the area is "dead" (no link)."#),
+    target(r#"Browsing context for the link.
+
+One of:
+- `_self` (default)
+- `_blank`
+- `_parent`
+- `_top`
+- a navigable target name"#),
+    rel(r#"Relationship between the current document and the linked resource.
+
+A space-separated list of link types. Common values:
+- `alternate`
+- `author`
+- `bookmark`
+- `external`
+- `help`
+- `license`
+- `next`
+- `nofollow`
+- `noopener`
+- `noreferrer`
+- `prev`
+- `search`
+- `tag`
+
+`noopener` and `noreferrer` are recommended for `target="_blank"`."#),
+    download(r#"If present, the linked resource is downloaded instead of being navigated to. The value, if provided, is the suggested file name.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. When a non-empty value is provided, it suggests a default filename for the download."#),
+    ping(r#"Space-separated list of URLs to ping with a `POST` request when the link is followed.
+
+Used for click-through tracking. The pings are sent in the background, do not block navigation, and are subject to referrer policy."#),
+    referrerpolicy(r#"Referrer policy for the request.
+
+One of:
+- `no-referrer`
+- `no-referrer-when-downgrade`
+- `same-origin`
+- `origin`
+- `strict-origin`
+- `origin-when-cross-origin`
+- `strict-origin-when-cross-origin`
+- `unsafe-url`"#),
+    media(r#"Media query for which the link applies (e.g. `screen`, `print`).
+
+Accepts any valid media query list."#));
 
 // Create a new [`HtmlPicture`] element (`<picture>`).
 factory!(picture, HtmlPicture);
@@ -109,8 +378,6 @@ factory!(iframe, HtmlIframe);
 factory!(embed, HtmlEmbed);
 // Create a new [`HtmlObject`] element (`<object>`).
 factory!(object, HtmlObject);
-// Create a new [`HtmlParam`] element (`<param>`).
-factory!(param, HtmlParam);
 // Create a new [`HtmlVideo`] element (`<video>`).
 factory!(video, HtmlVideo);
 // Create a new [`HtmlAudio`] element (`<audio>`).
@@ -121,8 +388,6 @@ factory!(track, HtmlTrack);
 factory!(map, HtmlMap);
 // Create a new [`HtmlArea`] element (`<area>`).
 factory!(area, HtmlArea);
-// Create a new [`HtmlPortal`] element (`<portal>`).
-factory!(portal, HtmlPortal);
 
 #[cfg(test)]
 mod tests {
@@ -159,7 +424,6 @@ mod tests {
         assert_eq!(img().crossorigin("anonymous").render(), r#"<img crossorigin="anonymous">"#);
         assert_eq!(img().usemap("#map").render(), r##"<img usemap="#map">"##);
         assert_eq!(img().ismap("true").render(), r#"<img ismap="true">"#);
-        assert_eq!(img().longdesc("desc.html").render(), r#"<img longdesc="desc.html">"#);
     }
 
     #[test]
@@ -174,7 +438,6 @@ mod tests {
         assert_eq!(iframe().sandbox("allow-scripts").render(), r#"<iframe sandbox="allow-scripts"></iframe>"#);
         assert_eq!(iframe().allow("camera").render(), r#"<iframe allow="camera"></iframe>"#);
         assert_eq!(iframe().allowfullscreen("true").render(), r#"<iframe allowfullscreen="true"></iframe>"#);
-        assert_eq!(iframe().allowpaymentrequest("true").render(), r#"<iframe allowpaymentrequest="true"></iframe>"#);
         assert_eq!(iframe().credentialless("true").render(), r#"<iframe credentialless="true"></iframe>"#);
         assert_eq!(iframe().csp("default-src 'self'").render(), r#"<iframe csp="default-src 'self'"></iframe>"#);
     }
@@ -195,13 +458,6 @@ mod tests {
         assert_eq!(object().form("myform").render(), r#"<object form="myform"></object>"#);
         assert_eq!(object().width("400").render(), r#"<object width="400"></object>"#);
         assert_eq!(object().height("300").render(), r#"<object height="300"></object>"#);
-        assert_eq!(object().typemustmatch("true").render(), r#"<object typemustmatch="true"></object>"#);
-    }
-
-    #[test]
-    fn param_attrs() {
-        assert_eq!(param().name("movie").render(), r#"<param name="movie">"#);
-        assert_eq!(param().value("film.swf").render(), r#"<param value="film.swf">"#);
     }
 
     #[test]
@@ -255,12 +511,6 @@ mod tests {
         assert_eq!(area().download("file.txt").render(), r#"<area download="file.txt">"#);
         assert_eq!(area().ping("/track").render(), r#"<area ping="/track">"#);
         assert_eq!(area().referrerpolicy("no-referrer").render(), r#"<area referrerpolicy="no-referrer">"#);
-        assert_eq!(area().type_attr("text/html").render(), r#"<area type="text/html">"#);
         assert_eq!(area().media("screen").render(), r#"<area media="screen">"#);
-    }
-
-    #[test]
-    fn portal_element() {
-        assert_eq!(portal().render(), "<portal></portal>");
     }
 }

@@ -2,23 +2,23 @@
 
 use super::macros::{define_html_element, factory};
 
-define_html_element!(HtmlBody, "body");
-define_html_element!(HtmlArticle, "article");
-define_html_element!(HtmlSection, "section");
-define_html_element!(HtmlNav, "nav");
-define_html_element!(HtmlAside, "aside");
-define_html_element!(HtmlH1, "h1");
-define_html_element!(HtmlH2, "h2");
-define_html_element!(HtmlH3, "h3");
-define_html_element!(HtmlH4, "h4");
-define_html_element!(HtmlH5, "h5");
-define_html_element!(HtmlH6, "h6");
-define_html_element!(HtmlHeader, "header");
-define_html_element!(HtmlFooter, "footer");
-define_html_element!(HtmlAddress, "address");
-define_html_element!(HtmlMain, "main");
-define_html_element!(HtmlSearch, "search");
-define_html_element!(HtmlHgroup, "hgroup");
+define_html_element!(HtmlBody, "body", all);
+define_html_element!(HtmlArticle, "article", all);
+define_html_element!(HtmlSection, "section", all);
+define_html_element!(HtmlNav, "nav", all);
+define_html_element!(HtmlAside, "aside", all);
+define_html_element!(HtmlH1, "h1", all);
+define_html_element!(HtmlH2, "h2", all);
+define_html_element!(HtmlH3, "h3", all);
+define_html_element!(HtmlH4, "h4", all);
+define_html_element!(HtmlH5, "h5", all);
+define_html_element!(HtmlH6, "h6", all);
+define_html_element!(HtmlHeader, "header", all);
+define_html_element!(HtmlFooter, "footer", all);
+define_html_element!(HtmlAddress, "address", all);
+define_html_element!(HtmlMain, "main", all);
+define_html_element!(HtmlSearch, "search", all);
+define_html_element!(HtmlHgroup, "hgroup", all);
 
 // Create a new [`HtmlBody`] element (`<body>`).
 factory!(body, HtmlBody);

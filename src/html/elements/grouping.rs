@@ -2,33 +2,56 @@
 
 use super::macros::{define_html_element, factory};
 
-define_html_element!(HtmlP, "p");
-define_html_element!(HtmlHr, "hr", color("Horizontal rule color."), width("Horizontal rule width."));
-define_html_element!(HtmlPre, "pre",
-    width("Visual width."),
-    cols("Number of columns."),
-    tabindex("Tab navigation order."),
-    wrap("Text wrapping mode."),
-    name("Element name."),
-    autofocus("Whether to focus on page load."));
-define_html_element!(HtmlBlockquote, "blockquote", cite("URL of the quoted source."));
-define_html_element!(HtmlOl, "ol",
-    type_attr("List numbering type (1, a, i, etc.)."),
-    reversed("Whether the list is reversed."),
-    start("Starting number."));
-define_html_element!(HtmlUl, "ul", type_attr("List style type (disc, circle, square)."));
-define_html_element!(HtmlMenu, "menu",
-    type_attr("Menu type (toolbar)."),
-    label("Menu label."));
-define_html_element!(HtmlLi, "li",
-    value("Override the list item number."),
-    type_attr("List item style override."));
-define_html_element!(HtmlDl, "dl");
-define_html_element!(HtmlDt, "dt");
-define_html_element!(HtmlDd, "dd");
-define_html_element!(HtmlFigure, "figure");
-define_html_element!(HtmlFigcaption, "figcaption");
-define_html_element!(HtmlDiv, "div");
+define_html_element!(HtmlP, "p", all);
+define_html_element!(HtmlHr, "hr", all);
+define_html_element!(HtmlPre, "pre", all,
+    tabindex(r#"Tab navigation order for the element.
+
+A valid integer. Negative values remove the element from the tab order. This is a global attribute; included here for convenience on `<pre>`."#),
+    wrap(r#"Legacy hint for how text in the element is wrapped.
+
+The WHATWG HTML Living Standard does not list this attribute on `<pre>`. It is preserved here for compatibility with older documents. Use CSS `white-space` for new code."#),
+    name(r#"Legacy attribute on `<pre>`. Not part of current HTML.
+
+Previously used to associate a name with the element. Use `id` instead."#),
+    autofocus(r#"Boolean attribute. When present, the element receives focus when the document or dialog is loaded.
+
+This is a global boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one element per document may autofocus."#),
+    cols(r#"Legacy attribute on `<pre>`. Not part of current HTML.
+
+Previously specified the preferred column count. Use CSS `width`/`max-width` instead."#));
+define_html_element!(HtmlBlockquote, "blockquote", all, cite(r#"URL of the source being quoted or referenced.
+
+May be a citation for a journalistic-style block quote, a link to the source article, or a reference to a person whose words are quoted."#));
+define_html_element!(HtmlOl, "ol", all,
+    type_attr(r#"Kind of marker used to label each list item.
+
+One of:
+- `1` (decimal numbers; default)
+- `a` (lowercase ASCII letters: `a`, `b`, `c`, ...)
+- `A` (uppercase ASCII letters: `A`, `B`, `C`, ...)
+- `i` (lowercase Roman numerals: `i`, `ii`, `iii`, ...)
+- `I` (uppercase Roman numerals: `I`, `II`, `III`, ...)
+
+For new content, prefer the CSS `list-style-type` property. This attribute is supported for legacy reasons."#),
+    reversed(r#"Boolean attribute. When present, the list is rendered in descending order (the `start` value is treated as the highest number).
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    start(r#"Starting ordinal value for the list (a valid integer; default `1`).
+
+Together with `type` and `reversed`, controls the rendered sequence."#));
+define_html_element!(HtmlUl, "ul", all);
+define_html_element!(HtmlMenu, "menu", all);
+define_html_element!(HtmlLi, "li", all,
+    value(r#"Override the ordinal value of this list item (a valid integer).
+
+Applies only when the parent is an `<ol>`. The next items continue counting from this value."#));
+define_html_element!(HtmlDl, "dl", all);
+define_html_element!(HtmlDt, "dt", all);
+define_html_element!(HtmlDd, "dd", all);
+define_html_element!(HtmlFigure, "figure", all);
+define_html_element!(HtmlFigcaption, "figcaption", all);
+define_html_element!(HtmlDiv, "div", all);
 
 // Create a new [`HtmlP`] element (`<p>`).
 factory!(p, HtmlP);
@@ -69,19 +92,17 @@ mod tests {
     }
 
     #[test]
-    fn hr_attrs() {
-        assert_eq!(hr().color("red").render(), r#"<hr color="red">"#);
-        assert_eq!(hr().width("100%").render(), r#"<hr width="100%">"#);
+    fn hr_element() {
+        assert_eq!(hr().render(), "<hr>");
     }
 
     #[test]
     fn pre_attrs() {
-        assert_eq!(pre().width("80").render(), r#"<pre width="80"></pre>"#);
-        assert_eq!(pre().cols("80").render(), r#"<pre cols="80"></pre>"#);
         assert_eq!(pre().tabindex("0").render(), r#"<pre tabindex="0"></pre>"#);
         assert_eq!(pre().wrap("soft").render(), r#"<pre wrap="soft"></pre>"#);
         assert_eq!(pre().name("code").render(), r#"<pre name="code"></pre>"#);
         assert_eq!(pre().autofocus("true").render(), r#"<pre autofocus="true"></pre>"#);
+        assert_eq!(pre().cols("80").render(), r#"<pre cols="80"></pre>"#);
     }
 
     #[test]
@@ -97,20 +118,18 @@ mod tests {
     }
 
     #[test]
-    fn ul_attrs() {
-        assert_eq!(ul().type_attr("disc").render(), r#"<ul type="disc"></ul>"#);
+    fn ul_element() {
+        assert_eq!(ul().render(), "<ul></ul>");
     }
 
     #[test]
-    fn menu_attrs() {
-        assert_eq!(menu().type_attr("toolbar").render(), r#"<menu type="toolbar"></menu>"#);
-        assert_eq!(menu().label("Actions").render(), r#"<menu label="Actions"></menu>"#);
+    fn menu_element() {
+        assert_eq!(menu().render(), "<menu></menu>");
     }
 
     #[test]
     fn li_attrs() {
         assert_eq!(li().value("3").render(), r#"<li value="3"></li>"#);
-        assert_eq!(li().type_attr("a").render(), r#"<li type="a"></li>"#);
     }
 
     #[test]

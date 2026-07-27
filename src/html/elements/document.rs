@@ -2,38 +2,156 @@
 
 use super::macros::{define_html_element, factory};
 
-define_html_element!(HtmlHtml, "html");
-define_html_element!(HtmlHead, "head");
-define_html_element!(HtmlTitle, "title");
-define_html_element!(HtmlBase, "base", href("URL for relative links."), target("Default frame target."));
-define_html_element!(HtmlLink, "link",
-    href("URL of the linked resource."),
-    rel("Relationship to the linked resource."),
-    type_attr("MIME type of the resource."),
-    media("Target media query."),
-    sizes("Icon sizes."),
-    crossorigin("CORS setting."),
-    integrity("Subresource integrity hash."),
-    hreflang("Language of the linked resource."),
-    referrerpolicy("Referrer policy."),
-    as_attr("Fetch destination."),
-    color("Theme color."),
-    disabled("Whether the link is disabled."),
-    fetchpriority("Fetch priority hint."),
-    imagesizes("Image sizes for srcset."),
-    imagesrcset("Image sources for srcset."));
-define_html_element!(HtmlMeta, "meta",
-    name("Metadata name."),
-    content("Metadata value."),
-    charset("Character encoding."),
-    http_equiv("Pragma directive."),
-    media("Target media query."));
-define_html_element!(HtmlStyle, "style",
-    type_attr("MIME type of the style sheet."),
-    media("Target media query."),
-    nonce("Cryptographic nonce."),
-    title("Style sheet title."),
-    blocking("Blocking token."));
+define_html_element!(HtmlHtml, "html", no_aria);
+define_html_element!(HtmlHead, "head", no_aria);
+define_html_element!(HtmlTitle, "title", no_aria);
+define_html_element!(HtmlBase, "base", no_aria,
+    href(r#"Document base URL for resolving relative URLs.
+
+Must be an absolute URL."#),
+    target(r#"Default browsing context for hyperlinks and forms without an explicit `target`.
+
+One of:
+- `_self` (default if omitted)
+- `_blank`
+- `_parent`
+- `_top`
+- a navigable target name (must be 1 or more ASCII letters, followed by zero or more ASCII letters, digits, or hyphens)"#));
+define_html_element!(HtmlLink, "link", no_aria,
+    href(r#"URL of the linked resource."#),
+    rel(r#"Relationship between the current document and the linked resource.
+
+A space-separated list of link types. Common values:
+- `alternate`
+- `author`
+- `canonical`
+- `dns-prefetch`
+- `help`
+- `icon`
+- `license`
+- `manifest`
+- `modulepreload`
+- `next`
+- `pingback`
+- `preconnect`
+- `prefetch`
+- `preload`
+- `prev`
+- `search`
+- `stylesheet`
+
+Some tokens (e.g. `preload`) require the `as` attribute to describe the destination."#),
+    type_attr(r#"MIME type hint for the linked resource (e.g. `text/css`, `image/png`, `application/json`).
+
+For `rel="stylesheet"`, valid values are `text/css` (only, if present). User agents must not consider this attribute a definitive statement of the resource's type."#),
+    media(r#"Media query list for which the resource applies (e.g. `screen`, `print`, `(min-width: 800px)`).
+
+Accepts any valid media query list; default is `all`."#),
+    sizes(r#"Icon sizes for `rel="icon"`.
+
+Comma-separated list of sizes, each either `any` or `<width>x<height>` in CSS pixels:
+- `any`
+- `16x16`
+- `32x32 64x64`"#),
+    crossorigin(r#"CORS setting for the request.
+
+One of:
+- `anonymous`
+- `use-credentials`"#),
+    integrity(r#"Subresource Integrity hash (e.g. `sha384-...`).
+
+A base64-encoded cryptographic hash of the resource, prefixed with the algorithm name. The browser refuses to apply the resource if the hash does not match."#),
+    hreflang(r#"Language of the linked resource as a BCP 47 language tag (e.g. `en`, `en-US`)."#),
+    referrerpolicy(r#"Referrer policy for the request.
+
+One of:
+- `no-referrer`
+- `no-referrer-when-downgrade`
+- `same-origin`
+- `origin`
+- `strict-origin`
+- `origin-when-cross-origin`
+- `strict-origin-when-cross-origin`
+- `unsafe-url`"#),
+    as_attr(r#"Fetch destination for `rel="preload"` or `rel="modulepreload"`.
+
+One of:
+- `audio`
+- `audioworklet`
+- `document`
+- `embed`
+- `fetch`
+- `font`
+- `frame`
+- `iframe`
+- `image`
+- `json`
+- `manifest`
+- `object`
+- `paintworklet`
+- `report`
+- `script`
+- `serviceworker`
+- `sharedworker`
+- `style`
+- `track`
+- `video`
+- `worker`
+- `xslt`"#),
+    color(r#"Color hint for `rel="icon"` (e.g. `#fff`, `tomato`).
+
+Used by some user agents to render the UI accent alongside the icon (notably the address-bar icon on macOS Safari)."#),
+    disabled(r#"Boolean attribute. When present, the link is disabled and not fetched.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. User agents ignore disabled links when discovering resources."#),
+    fetchpriority(r#"Hint for the relative fetch priority of the link.
+
+One of:
+- `high`
+- `low`
+- `auto` (default)"#),
+    imagesizes(r#"Sizes for an image source set used in conjunction with `imagesrcset`.
+
+Same syntax as the `sizes` attribute on `<img>` (e.g. `(max-width: 600px) 100vw, 50vw`)."#),
+    imagesrcset(r#"Source set for an image used in conjunction with `imagesizes`.
+
+Same syntax as the `srcset` attribute on `<img>` (e.g. `small.webp 1x, large.webp 2x`)."#));
+define_html_element!(HtmlMeta, "meta", no_aria,
+    name(r#"Metadata name (e.g. `application-name`, `author`, `description`, `generator`, `keywords`, `referrer`, `theme-color`, `color-scheme`, `viewport`).
+
+Pairs with `content` to form a name/value pair. Some standard names are also recognized as `<meta>` pragmas when used with `http-equiv`."#),
+    content(r#"Metadata value associated with the `name` or `http-equiv` attribute."#),
+    charset(r#"Character encoding declaration for the document.
+
+The standard value is `UTF-8`. Equivalent to `<meta charset="UTF-8">` and must appear within the first 1024 bytes of the document."#),
+    http_equiv(r#"Pragma directive, simulating an HTTP response header.
+
+Common values:
+- `content-type`
+- `default-style`
+- `refresh`
+- `x-ua-compatible`
+- `content-security-policy`
+
+The meaning of `content` depends on the directive; e.g. `refresh` uses `content="5; url=/next"` to redirect after 5 seconds."#),
+    media(r#"Media query for which the metadata applies.
+
+Accepts any valid media query list. Currently only meaningful for `name="theme-color"` (controls per-scheme browser chrome color)."#));
+define_html_element!(HtmlStyle, "style", no_aria,
+    type_attr(r#"MIME type of the style sheet.
+
+The standard value is `text/css`. In practice this attribute should be omitted; the value, if present, must be `text/css`."#),
+    media(r#"Media query list for which the styles apply (e.g. `screen`, `print`, `(min-width: 800px)`).
+
+Accepts any valid media query list; default is `all`."#),
+    nonce(r#"Cryptographic nonce used by Content Security Policy to permit inline styles that would otherwise be blocked."#),
+    title(r#"Title of the stylesheet; user agents may expose this in alternate-stylesheet pickers."#),
+    blocking(r#"Tokens indicating the stylesheet blocks rendering until fetched and applied.
+
+Currently one keyword:
+- `render`
+
+The element is render-blocking only when this attribute contains `render`."#));
 
 // Create a new [`HtmlHtml`] element (`<html>`).
 factory!(html, HtmlHtml);

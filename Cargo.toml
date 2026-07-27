@@ -12,9 +12,17 @@ categories = ["template-engine"]
 
 [features]
 default = []
+# Templated component data model: `Component`, `Expr`, `Props`, render impls.
+components = []
+# On-the-wire `.mrk` format: depends on `components`. Adds `Mrk` encoder/decoder,
+# `ParseError`, and `MAX_PAYLOAD`.
+ir = ["components"]
+# HTML rendering helpers (114 tag factories, void elements, escaping).
 html = []
+# SVG element factories for the 67 SVG 2 elements (independent of `html`).
+svg = []
 
 [dependencies]
 
 [package.metadata.docs.rs]
-features = ["html"]
+features = ["html", "svg", "ir"]

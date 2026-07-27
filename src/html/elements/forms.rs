@@ -2,114 +2,369 @@
 
 use super::macros::{define_html_element, factory};
 
-define_html_element!(HtmlForm, "form",
-    action("URL to submit the form to."),
-    method("HTTP method (get, post, dialog)."),
-    enctype("Encoding type for form data."),
-    target("Frame target for the response."),
-    autocomplete("Whether autocomplete is enabled."),
-    novalidate("Whether to skip validation."),
-    name("Form name."),
-    accept_charset("Accepted character encodings."),
-    rel("Relationship to the linked resource."));
-define_html_element!(HtmlLabel, "label",
-    for_attr("ID of the associated form control."),
-    form_attr("Associated form ID."));
-define_html_element!(HtmlInput, "input",
-    type_attr("Input type (text, email, password, etc.)."),
-    name("Field name."),
-    value("Current value."),
-    placeholder("Placeholder text."),
-    required("Whether the field is required."),
-    disabled("Whether the field is disabled."),
-    readonly("Whether the field is read-only."),
-    checked("Whether the field is checked."),
-    maxlength("Maximum length of the value."),
-    minlength("Minimum length of the value."),
-    pattern("Regular expression for validation."),
-    size("Display width in characters."),
-    min("Minimum value."),
-    max("Maximum value."),
-    step("Step increment for numeric inputs."),
-    src("URL of the image for image inputs."),
-    alt("Alternative text for image inputs."),
-    accept("Accepted file types for file inputs."),
-    autocomplete("Autocomplete hint."),
-    autofocus("Whether to focus on page load."),
-    form_attr("Associated form ID."),
-    formaction("URL to submit the form to (overrides form action)."),
-    formenctype("Encoding type for form data (overrides form)."),
-    formmethod("HTTP method (overrides form method)."),
-    formnovalidate("Whether to skip validation (overrides form)."),
-    formtarget("Frame target (overrides form target)."),
-    height("Display height in pixels."),
-    width("Display width in pixels."),
-    list("ID of the associated datalist."),
-    multiple("Whether multiple values are allowed."),
-    spellcheck("Whether spell checking is enabled."),
-    datalist("ID of the associated datalist."),
-    popovertarget("ID of the popover element to toggle."),
-    popovertargetaction("Popover action (toggle, show, or hide)."));
-define_html_element!(HtmlButton, "button",
-    type_attr("Button type (submit, reset, button)."),
-    disabled("Whether the button is disabled."),
-    form_attr("Associated form ID."),
-    name("Button name."),
-    value("Button value."),
-    autofocus("Whether to focus on page load."),
-    popovertarget("ID of the popover element to toggle."),
-    popovertargetaction("Popover action (toggle, show, or hide)."));
-define_html_element!(HtmlSelect, "select",
-    name("Select name."),
-    required("Whether selection is required."),
-    disabled("Whether the select is disabled."),
-    multiple("Whether multiple selection is allowed."),
-    size("Number of visible options."),
-    autofocus("Whether to focus on page load."),
-    form_attr("Associated form ID."));
-define_html_element!(HtmlDatalist, "datalist");
-define_html_element!(HtmlOptgroup, "optgroup",
-    disabled("Whether the group is disabled."),
-    label("Group label text."));
-define_html_element!(HtmlOption, "option",
-    disabled("Whether the option is disabled."),
-    label("Option label text."),
-    selected("Whether the option is selected."),
-    value("Value submitted when selected."));
-define_html_element!(HtmlTextarea, "textarea",
-    name("Textarea name."),
-    rows("Number of visible text rows."),
-    cols("Number of visible text columns."),
-    placeholder("Placeholder text."),
-    required("Whether the field is required."),
-    disabled("Whether the field is disabled."),
-    readonly("Whether the field is read-only."),
-    maxlength("Maximum length of the value."),
-    minlength("Minimum length of the value."),
-    autocomplete("Autocomplete hint."),
-    autofocus("Whether to focus on page load."),
-    wrap("Line wrapping mode (soft or hard)."),
-    form_attr("Associated form ID."),
-    spellcheck("Whether spell checking is enabled."));
-define_html_element!(HtmlOutput, "output",
-    for_attr("Space-separated IDs of input elements."),
-    form_attr("Associated form ID."),
-    name("Output name."));
-define_html_element!(HtmlProgress, "progress",
-    value("Current value."),
-    max("Maximum value."));
-define_html_element!(HtmlMeter, "meter",
-    value("Current value."),
-    min("Minimum value."),
-    max("Maximum value."),
-    low("Low threshold."),
-    high("High threshold."),
-    optimum("Optimal value."));
-define_html_element!(HtmlFieldset, "fieldset",
-    disabled("Whether the fieldset is disabled."),
-    form_attr("Associated form ID."),
-    name("Fieldset name."));
-define_html_element!(HtmlLegend, "legend");
+define_html_element!(HtmlForm, "form", all,
+    action(r#"URL to which the form will be submitted.
+
+If omitted, the form is submitted to the current document URL."#),
+    method(r#"HTTP method to use when submitting the form.
+
+One of:
+- `get` (default; encoded into the URL as a query string)
+- `post` (sent in the request body)
+- `dialog` (closes the containing `<dialog>` and submits the form, but does not submit in the usual sense)
+
+Tokens are case-insensitive."#),
+    enctype(r#"Encoding type for form data when `method="post"`.
+
+One of:
+- `application/x-www-form-urlencoded` (default)
+- `multipart/form-data` (required when uploading files via `<input type="file">`)
+- `text/plain` (not recommended; not interoperable)"#),
+    target(r#"Browsing context in which to display the form submission response.
+
+One of:
+- `_self` (default)
+- `_blank`
+- `_parent`
+- `_top`
+- a navigable target name"#),
+    autocomplete(r#"Whether the user agent is allowed to autofill the form's controls.
+
+One of:
+- `on` (allow autofill; default)
+- `off` (do not allow autofill)"#),
+    novalidate(r#"Boolean attribute. When present, the form is not validated before submission.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    name(r#"Name of the form.
+
+Used to identify the form in the document; also exposed on `document.forms`."#),
+    accept_charset(r#"Space- and/or comma-separated list of character encodings the server accepts.
+
+Example: `UTF-8 ISO-8859-1`. UTF-8 is implied; the attribute is rarely used in practice."#),
+    rel(r#"Relationship between the current document and the form's submission target.
+
+A space-separated list of link types. Currently meaningful for forms whose submission navigates to a URL (e.g. `opener`, `noopener`, `noreferrer`)."#));
+define_html_element!(HtmlLabel, "label", all,
+    for_attr(r#"ID of the form control with which the label is associated.
+
+The label's activation (click, focus) targets the labeled control. Exactly one labeled control per label."#),
+    form_attr(r#"ID of the `<form>` element the label is associated with.
+
+Used when the label is not a descendant of its form."#));
+define_html_element!(HtmlInput, "input", all,
+    type_attr(r#"Type of input control.
+
+One of:
+- `hidden` (no displayed control, value sent with the form)
+- `text` (default; single-line text)
+- `search` (search-style text)
+- `tel` (telephone number)
+- `url` (absolute URL)
+- `email` (email address or list)
+- `password` (masked text)
+- `date` (year-month-day)
+- `month` (year-month)
+- `week` (year-week)
+- `time` (HH:MM)
+- `datetime-local` (year-month-day HH:MM, no timezone)
+- `number` (numeric value)
+- `range` (numeric value in a slider)
+- `color` (hex color)
+- `checkbox` (zero or one selected)
+- `radio` (one selected among a group sharing `name`)
+- `file` (one or more file uploads)
+- `submit` (form submission button)
+- `image` (image submission button; uses `src`/`alt`)
+- `reset` (form reset button)
+- `button` (push button with no default behavior)
+
+Custom values are allowed; the input is treated as `text` until the user agent recognizes the value."#),
+    name(r#"Name of the control, submitted with the form as part of the name/value pair.
+
+For grouped radio buttons, every button in the group shares the same `name`."#),
+    value(r#"Current value of the control.
+
+Sent as the value of the name/value pair on submission. For `<input type="checkbox">` and `<input type="radio">`, the value is sent only when the control is checked."#),
+    placeholder(r#"Short hint displayed inside the control when its value is empty.
+
+Not a substitute for a `<label>`. Line breaks are not rendered."#),
+    required(r#"Boolean attribute. When present, the control must have a non-empty value for the form to be submitted.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    disabled(r#"Boolean attribute. When present, the control is non-interactive and is not submitted with the form.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Disabled controls are excluded from the submitted data."#),
+    readonly(r#"Boolean attribute. When present, the control is not editable but is still focusable and submitted with the form.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `text`, `search`, `url`, `tel`, `email`, `password`, `date`, `month`, `week`, `time`, `datetime-local`, and `number`."#),
+    checked(r#"Boolean attribute. When present, the checkbox or radio button is initially checked.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `checkbox` and `radio`."#),
+    maxlength(r#"Maximum number of characters the value may contain (a valid non-negative integer).
+
+Applies to text-entry types: `text`, `search`, `url`, `tel`, `email`, `password`, and `textarea`."#),
+    minlength(r#"Minimum number of characters required for the value to be valid (a valid non-negative integer).
+
+Applies to the same text-entry types as `maxlength`. The form is invalid if the value is shorter."#),
+    pattern(r#"Regular expression the value must match for the control to be valid.
+
+A JavaScript-style regex without leading/trailing slashes (e.g. `[a-z]+`). Compile with anchors implied: the entire value must match."#),
+    size(r#"Display width in characters (a valid non-negative integer; default `20`).
+
+Sets the visible width of the control, not a limit on value length. Applies to text-entry types."#),
+    min(r#"Lower bound for the value.
+
+For numeric types (`number`, `range`): the minimum numeric value.
+For date/time types: the minimum date/time as a valid date or time string."#),
+    max(r#"Upper bound for the value.
+
+For numeric types: the maximum numeric value.
+For date/time types: the maximum date/time as a valid date or time string."#),
+    step(r#"Granularity of acceptable values (a positive number or `any`).
+
+Default is `1` for numeric types, `60` for `time`, and `1` day for date types. `any` disables the step constraint."#),
+    src(r#"URL of an image for `<input type="image">` only.
+
+Click coordinates are submitted as `name.x` and `name.y` query parameters. `alt` is required."#),
+    alt(r#"Alternative text for `<input type="image">`.
+
+Required when `type="image"`. Describes the image for screen readers and is shown when the image cannot be loaded."#),
+    accept(r#"Hint for which file types are accepted by `<input type="file">`.
+
+A comma-separated list of:
+- A file extension starting with `.` (e.g. `.jpg`, `.png`)
+- A valid MIME type with no extension (e.g. `image/jpeg`)
+- A MIME type wildcard like `image/*`, `audio/*`, `video/*`
+
+The browser may also offer a camera/microphone capture option by adding the `capture` attribute (not exposed here)."#),
+    autocomplete(r#"Autofill hint for the control.
+
+Standard tokens (case-insensitive) include:
+- `on` / `off` (general autofill toggle)
+- `name` (full name)
+- `given-name`, `family-name`
+- `email`
+- `username`
+- `current-password`, `new-password`
+- `one-time-code`
+- `organization`, `organization-title`
+- `street-address`, `address-line1`, `address-line2`, `address-level1`, `address-level2`, `postal-code`, `country`, `cc-name`, `cc-number`, `cc-exp`, `cc-csc`
+- `tel`, `tel-national`
+- `url`
+- `photo`
+- `bday`, `bday-day`, `bday-month`, `bday-year`
+
+A section name may prefix the token (e.g. `section-blue shipping street-address`)."#),
+    autofocus(r#"Boolean attribute. When present, the control receives focus when the document or dialog is loaded.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one element per document may autofocus."#),
+    form_attr(r#"ID of the `<form>` element with which the control is associated.
+
+Allows the control to be a form participant even when not nested inside the form."#),
+    formaction(r#"URL to submit the form to, overriding the form's `action` attribute.
+
+Applies to `<input type="submit">` and `<input type="image">`."#),
+    formenctype(r#"Encoding type for form data on submission, overriding the form's `enctype` attribute.
+
+Applies to `<input type="submit">` and `<input type="image">`. Same values as `enctype`:
+- `application/x-www-form-urlencoded` (default)
+- `multipart/form-data`
+- `text/plain`"#),
+    formmethod(r#"HTTP method to use on submission, overriding the form's `method` attribute.
+
+Applies to `<input type="submit">` and `<input type="image">`.
+
+One of:
+- `get`
+- `post`
+- `dialog` (close the containing dialog)"#),
+    formnovalidate(r#"Boolean attribute. When present, the form is not validated before submission, overriding the form's `novalidate` attribute.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `<input type="submit">` and `<input type="image">`."#),
+    formtarget(r#"Browsing context for the submission response, overriding the form's `target` attribute.
+
+Applies to `<input type="submit">` and `<input type="image">`. Same values as `target`:
+- `_self` (default)
+- `_blank`
+- `_parent`
+- `_top`
+- a navigable target name"#),
+    height(r#"Display height in CSS pixels (a valid non-negative integer) for `<input type="image">`."#),
+    width(r#"Display width in CSS pixels (a valid non-negative integer) for `<input type="image">`."#),
+    list(r#"ID of a `<datalist>` element providing suggested values for the control.
+
+The datalist is shown as a dropdown of options when the user interacts with the control. The value is not constrained to the suggestions."#),
+    multiple(r#"Boolean attribute. When present, the control accepts more than one value.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `email`, `file`, and `select`."#),
+    spellcheck(r#"Hint for the user agent's spell checking behavior.
+
+One of:
+- `true` (enable spell checking)
+- `false` (disable spell checking)
+- `default` (let the user agent decide; this is the default in HTML)
+
+The attribute is part of the global `spellcheck` definition."#),
+    datalist(r#"Non-standard alias for the `list` attribute. See `list` for the standard form."#),
+    popovertarget(r#"ID of the popover element to toggle when the button is activated.
+
+Applies to `<input type="button">` and `<input type="reset">` and `<input type="submit">` (effectively any input acting as a button). Standardized alongside the Popover API."#),
+    popovertargetaction(r#"Action the popover performs when the button is activated.
+
+One of:
+- `toggle` (default; show the popover if hidden, hide if showing)
+- `show` (always show)
+- `hide` (always hide)"#));
+define_html_element!(HtmlButton, "button", all,
+    type_attr(r#"Behavior of the button.
+
+One of:
+- `submit` (default; submits the form)
+- `reset` (resets the form's controls to their initial values)
+- `button` (no default behavior; use with JavaScript)"#),
+    disabled(r#"Boolean attribute. When present, the button is non-interactive and cannot be activated.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Disabled buttons are not submitted with the form."#),
+    form_attr(r#"ID of the `<form>` element with which the button is associated.
+
+Allows the button to submit or reset a form even when not nested inside it."#),
+    name(r#"Name of the button, submitted with the form as part of the name/value pair.
+
+Only submitted if the button itself activated the submission."#),
+    value(r#"Button's value, submitted with the form as part of the name/value pair when the button activates submission.
+
+Distinct from the button's text content; sent to the server instead of the text."#),
+    autofocus(r#"Boolean attribute. When present, the button receives focus when the document or dialog is loaded.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one element per document may autofocus."#),
+    popovertarget(r#"ID of the popover element to toggle when the button is activated."#),
+    popovertargetaction(r#"Action the popover performs when the button is activated.
+
+One of:
+- `toggle` (default)
+- `show`
+- `hide`"#));
+define_html_element!(HtmlSelect, "select", all,
+    name(r#"Name of the control, submitted with the form as part of the name/value pair."#),
+    required(r#"Boolean attribute. When present, a non-disabled option must be selected for the form to be valid.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. An empty selection is invalid."#),
+    disabled(r#"Boolean attribute. When present, the control is non-interactive and not submitted.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    multiple(r#"Boolean attribute. When present, more than one option may be selected.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Browsers typically render a list box when set."#),
+    size(r#"Number of visible options (a valid non-negative integer; default `1` if `multiple` is absent, `4` if present).
+
+When greater than 1 the control is rendered as a list box."#),
+    autofocus(r#"Boolean attribute. When present, the control receives focus when the document or dialog is loaded.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    form_attr(r#"ID of the `<form>` element with which the control is associated."#));
+define_html_element!(HtmlDatalist, "datalist", no_aria);
+define_html_element!(HtmlOptgroup, "optgroup", all,
+    disabled(r#"Boolean attribute. When present, all options in the group are non-interactive and not selectable.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    label(r#"User-visible label for the group of options.
+
+Required. Browsers render it as a non-selectable group heading."#));
+define_html_element!(HtmlOption, "option", all,
+    disabled(r#"Boolean attribute. When present, the option is non-interactive and not selectable.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    label(r#"User-visible label for the option.
+
+If absent, the text content of the option element is used. Used in the rendered list (rather than the value sent on submission)."#),
+    selected(r#"Boolean attribute. When present, the option is initially selected.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. In a single-select list, this deselects any previously selected option."#),
+    value(r#"Value submitted with the form when this option is selected.
+
+If absent, the text content of the option element is submitted instead."#));
+define_html_element!(HtmlTextarea, "textarea", all,
+    name(r#"Name of the control, submitted with the form as part of the name/value pair."#),
+    rows(r#"Visible height in lines of text (a valid non-negative integer; default `2`).
+
+The textarea scrolls when content exceeds this height."#),
+    cols(r#"Visible width in characters (a valid non-negative integer; default `20`).
+
+The textarea wraps when content exceeds this width, depending on `wrap`."#),
+    placeholder(r#"Short hint displayed inside the control when its value is empty.
+
+Not a substitute for a `<label>`. Line breaks are not rendered."#),
+    required(r#"Boolean attribute. When present, the value must be non-empty for the form to be valid.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    disabled(r#"Boolean attribute. When present, the control is non-interactive and not submitted.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    readonly(r#"Boolean attribute. When present, the control is not editable but is still focusable and submitted with the form.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    maxlength(r#"Maximum number of characters the value may contain (a valid non-negative integer)."#),
+    minlength(r#"Minimum number of characters required for the value to be valid (a valid non-negative integer)."#),
+    autocomplete(r#"Autofill hint for the control.
+
+Same token set as the `autocomplete` attribute on `<input>`: standard tokens like `on`, `off`, `name`, `email`, `street-address`, `postal-code`, etc."#),
+    autofocus(r#"Boolean attribute. When present, the control receives focus when the document or dialog is loaded.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    wrap(r#"Line wrapping behavior of the submitted value.
+
+One of:
+- `soft` (default; visual wrap only, no line breaks sent)
+- `hard` (visual wrap and `CR LF` line breaks inserted at wrap points; the `cols` attribute is required)"#),
+    form_attr(r#"ID of the `<form>` element with which the control is associated."#),
+    spellcheck(r#"Hint for the user agent's spell checking behavior.
+
+One of:
+- `true` (enable spell checking)
+- `false` (disable spell checking)
+- `default` (let the user agent decide)"#));
+define_html_element!(HtmlOutput, "output", all,
+    for_attr(r#"Space-separated list of IDs of input elements whose values contribute to the calculation shown in the output.
+
+A purely structural relationship; not used by the browser, but assistive technologies and the `output.htmlFor` IDL property expose it."#),
+    form_attr(r#"ID of the `<form>` element with which the output is associated.
+
+Allows `output` to participate in form submission even when not nested inside the form."#),
+    name(r#"Name of the output element, submitted with the form as part of the name/value pair."#));
+define_html_element!(HtmlProgress, "progress", all,
+    value(r#"Current value of the progress indicator (a valid floating-point number).
+
+Must be between 0 and `max` (or 1 if `max` is omitted). Determines the position of the indicator."#),
+    max(r#"Upper bound of the range (a valid floating-point number; default `1`).
+
+The displayed value is the ratio `value / max`."#));
+define_html_element!(HtmlMeter, "meter", all,
+    value(r#"Current value of the gauge (a valid floating-point number).
+
+Required. Must be between `min` and `max`."#),
+    min(r#"Lower bound of the gauge (a valid floating-point number; default `0`)."#),
+    max(r#"Upper bound of the gauge (a valid floating-point number; default `1`).
+
+Must be greater than `min`."#),
+    low(r#"Upper bound of the "low" range (a valid floating-point number; default equal to `min`).
+
+Values at or below this number are considered low."#),
+    high(r#"Lower bound of the "high" range (a valid floating-point number; default equal to `max`).
+
+Values at or above this number are considered high. Must be greater than `low`."#),
+    optimum(r#"Optimal value of the gauge (a valid floating-point number).
+
+Should lie within `min`..`max`. The user agent may style the gauge differently depending on whether the current value is below, within, or above the optimal range."#));
+define_html_element!(HtmlFieldset, "fieldset", all,
+    disabled(r#"Boolean attribute. When present, all form controls in the fieldset are disabled (matching the effect of setting `disabled` on each one).
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. The descendant controls are excluded from submission."#),
+    form_attr(r#"ID of the `<form>` element with which the fieldset is associated."#),
+    name(r#"Name of the fieldset.
+
+Submitted with the form as part of the name/value pair only if the fieldset is the form's first `<fieldset>` ancestor of an element being submitted."#));
+define_html_element!(HtmlLegend, "legend", all);
 
 // Create a new [`HtmlForm`] element (`<form>`).
 factory!(form, HtmlForm);

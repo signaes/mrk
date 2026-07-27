@@ -15,10 +15,13 @@ macro_rules! nodes {
         ::std::vec::Vec::<$crate::Node>::new()
     };
     ($($child:expr),+ $(,)?) => {{
-        let mut v: ::std::vec::Vec<$crate::Node> = ::std::vec::Vec::new();
-        $(
-            v.push(<_ as ::std::convert::Into<$crate::Node>>::into($child));
-        )+
-        v
+        #[allow(clippy::vec_init_then_push)]
+        {
+            let mut v: ::std::vec::Vec<$crate::Node> = ::std::vec::Vec::new();
+            $(
+                v.push(<_ as ::std::convert::Into<$crate::Node>>::into($child));
+            )+
+            v
+        }
     }};
 }

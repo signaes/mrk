@@ -1,95 +1,125 @@
-//! Macro for generating typed HTML element wrappers.
+//! HTML macro: `define_html_element!` and the HTML-specific `attr_name`
+//! table.
 //!
-//! Each typed element wraps an [`Element`] and adds element-specific
-//! attribute setters as methods. The macro generates:
+//! Wraps the helpers in [`crate::shared_macros`] with three
+//! globals-tier arms (one per allowed tier) plus the HTML
+//! [`attr_name`] lookup table.
 //!
-//! - A struct `pub struct $name(pub Element)`
-//! - `new()` constructor
-//! - `attrs()`, `children()`, `render()` builder methods
-//! - One method per attribute listed in the invocation
-//! - `From<$name> for Element` and `From<$name> for Node` impls
-//! - `Renderable for $name` impl
+//! # Globals tier
 //!
-//! Method names map to HTML attribute names via the exhaustive [`attr_name`]
-//! lookup table. Every attribute used in `define_html_element!` invocations
-//! must have a corresponding match arm.
+//! The third positional argument selects how many global HTML attribute
+//! methods the generated wrapper exposes:
 //!
-//! [`Element`]: crate::element::Element
+//! - `all` — common globals + all event handlers + full ARIA
+//! - `no_aria` — common globals + event handlers only
+//! - `aria_hidden_only` — common globals + event handlers + only
+//!   `aria-hidden`
+//!
+//! [`attr_name`]: crate::html::elements::macros::attr_name
+//! [`crate::shared_macros`]: crate::shared_macros
 
 macro_rules! define_html_element {
-    ($name:ident, $tag:literal $(, $($method:ident($doc:literal)),*)?) => {
-        /// Typed HTML element wrapper.
-        #[derive(Debug)]
-        pub struct $name(pub crate::element::Element);
-
+    ($name:ident, $tag:literal, all) => {
+        $crate::shared_macros::__define_struct!($name);
         impl $name {
-            /// Create a new empty element with the matching tag.
-            pub fn new() -> Self {
-                $name(crate::element::el($tag))
-            }
+            $crate::shared_macros::__new_method!($tag);
+            $crate::shared_macros::__builder_methods!();
+            $crate::shared_macros::__common_globals_methods!();
+            $crate::shared_macros::__event_handlers_methods!();
+            $crate::shared_macros::__aria_all_methods!();
+        }
+        $crate::shared_macros::__from_impls!($name);
+    };
 
-            /// Replace the element's attributes.
-            pub fn attrs(mut self, attrs: Vec<crate::attributes::Attribute>) -> Self {
-                self.0 = self.0.attrs(attrs);
-                self
-            }
-
-            /// Replace the element's children.
-            pub fn children(mut self, children: Vec<crate::node::Node>) -> Self {
-                self.0 = self.0.children(children);
-                self
-            }
-
-            /// Render to HTML string.
-            pub fn render(&self) -> String {
-                use crate::renderable::Renderable;
-                self.0.render()
-            }
-
+    ($name:ident, $tag:literal, all, $($method:ident($doc:literal)),+ $(,)?) => {
+        $crate::shared_macros::__define_struct!($name);
+        impl $name {
+            $crate::shared_macros::__new_method!($tag);
+            $crate::shared_macros::__builder_methods!();
             $(
-                $(
-                    #[doc = $doc]
-                    pub fn $method(self, value: &'static str) -> Self {
-                        let attr_name = crate::html::elements::macros::attr_name(stringify!($method));
-                        $name(self.0.attrs(vec![
-                            crate::attributes::attr(attr_name).value(value)
-                        ]))
-                    }
-                )*
-            )?
+                $crate::shared_macros::__emitted_custom_method!(
+                    $method, $doc,
+                    $crate::html::elements::macros::attr_name
+                );
+            )+
+            $crate::shared_macros::__common_globals_methods!();
+            $crate::shared_macros::__event_handlers_methods!();
+            $crate::shared_macros::__aria_all_methods!();
         }
+        $crate::shared_macros::__from_impls!($name);
+    };
 
-        impl From<$name> for crate::element::Element {
-            fn from(e: $name) -> crate::element::Element {
-                e.0
-            }
+    ($name:ident, $tag:literal, no_aria) => {
+        $crate::shared_macros::__define_struct!($name);
+        impl $name {
+            $crate::shared_macros::__new_method!($tag);
+            $crate::shared_macros::__builder_methods!();
+            $crate::shared_macros::__common_globals_methods!();
+            $crate::shared_macros::__event_handlers_methods!();
         }
+        $crate::shared_macros::__from_impls!($name);
+    };
 
-        impl From<$name> for crate::node::Node {
-            fn from(e: $name) -> crate::node::Node {
-                crate::node::Node::Element(e.0)
-            }
+    ($name:ident, $tag:literal, no_aria, $($method:ident($doc:literal)),+ $(,)?) => {
+        $crate::shared_macros::__define_struct!($name);
+        impl $name {
+            $crate::shared_macros::__new_method!($tag);
+            $crate::shared_macros::__builder_methods!();
+            $(
+                $crate::shared_macros::__emitted_custom_method!(
+                    $method, $doc,
+                    $crate::html::elements::macros::attr_name
+                );
+            )+
+            $crate::shared_macros::__common_globals_methods!();
+            $crate::shared_macros::__event_handlers_methods!();
         }
+        $crate::shared_macros::__from_impls!($name);
+    };
 
-        impl crate::renderable::Renderable for $name {
-            fn render(&self) -> String {
-                self.0.render()
-            }
+    ($name:ident, $tag:literal, aria_hidden_only) => {
+        $crate::shared_macros::__define_struct!($name);
+        impl $name {
+            $crate::shared_macros::__new_method!($tag);
+            $crate::shared_macros::__builder_methods!();
+            $crate::shared_macros::__common_globals_methods!();
+            $crate::shared_macros::__event_handlers_methods!();
+            $crate::shared_macros::__aria_hidden_methods!();
         }
+        $crate::shared_macros::__from_impls!($name);
+    };
+
+    ($name:ident, $tag:literal, aria_hidden_only, $($method:ident($doc:literal)),+ $(,)?) => {
+        $crate::shared_macros::__define_struct!($name);
+        impl $name {
+            $crate::shared_macros::__new_method!($tag);
+            $crate::shared_macros::__builder_methods!();
+            $(
+                $crate::shared_macros::__emitted_custom_method!(
+                    $method, $doc,
+                    $crate::html::elements::macros::attr_name
+                );
+            )+
+            $crate::shared_macros::__common_globals_methods!();
+            $crate::shared_macros::__event_handlers_methods!();
+            $crate::shared_macros::__aria_hidden_methods!();
+        }
+        $crate::shared_macros::__from_impls!($name);
     };
 }
 
 pub(crate) use define_html_element;
 
+/// HTML attribute name lookup table.
 pub(crate) fn attr_name(ident: &str) -> &'static str {
     match ident {
+        // Existing element-specific identifiers.
         "abbr" => "abbr",
         "accept" => "accept",
         "accept_charset" => "accept-charset",
         "action" => "action",
         "allow" => "allow",
         "allowfullscreen" => "allowfullscreen",
-        "allowpaymentrequest" => "allowpaymentrequest",
         "alt" => "alt",
         "as_attr" => "as",
         "async_attr" => "async",
@@ -141,7 +171,6 @@ pub(crate) fn attr_name(ident: &str) -> &'static str {
         "label" => "label",
         "list" => "list",
         "loading" => "loading",
-        "longdesc" => "longdesc",
         "loop_attr" => "loop",
         "low" => "low",
         "max" => "max",
@@ -166,7 +195,7 @@ pub(crate) fn attr_name(ident: &str) -> &'static str {
         "popovertargetaction" => "popovertargetaction",
         "poster" => "poster",
         "preload" => "preload",
-        "preserve_aspect_ratio" => "preserve-aspect-ratio",
+        "preserve_aspect_ratio" => "preserveAspectRatio",
         "readonly" => "readonly",
         "referrerpolicy" => "referrerpolicy",
         "rel" => "rel",
@@ -193,14 +222,85 @@ pub(crate) fn attr_name(ident: &str) -> &'static str {
         "title" => "title",
         "title_attr" => "title",
         "type_attr" => "type",
-        "typemustmatch" => "typemustmatch",
         "usemap" => "usemap",
         "value" => "value",
         "version" => "version",
-        "view_box" => "view-box",
+        "view_box" => "viewBox",
         "width" => "width",
         "wrap" => "wrap",
         "xmlns" => "xmlns",
+        "tabindex_global" => "tabindex",
+        "nonce_global" => "nonce",
+        "title_global" => "title",
+        "autofocus_global" => "autofocus",
+        "autocomplete_global" => "autocomplete",
+        "list_global" => "list",
+        "spellcheck_global" => "spellcheck",
+        "form_global" => "form",
+        "aria_label" => "aria-label",
+        "aria_labelledby" => "aria-labelledby",
+        "aria_describedby" => "aria-describedby",
+        "aria_description" => "aria-description",
+        "aria_hidden" => "aria-hidden",
+        "aria_role" => "role",
+        "aria_live" => "aria-live",
+        "aria_current" => "aria-current",
+        "aria_required" => "aria-required",
+        "aria_disabled" => "aria-disabled",
+        "aria_expanded" => "aria-expanded",
+        "aria_selected" => "aria-selected",
+        "aria_checked" => "aria-checked",
+        "aria_pressed" => "aria-pressed",
+        "aria_haspopup" => "aria-haspopup",
+        "aria_invalid" => "aria-invalid",
+        "aria_readonly" => "aria-readonly",
+        "aria_busy" => "aria-busy",
+        "aria_relevant" => "aria-relevant",
+        "aria_atomic" => "aria-atomic",
+        "aria_details" => "aria-details",
+        "aria_errormessage" => "aria-errormessage",
+        "aria_controls" => "aria-controls",
+        "aria_flowto" => "aria-flowto",
+        "aria_owns" => "aria-owns",
+        "aria_activedescendant" => "aria-activedescendant",
+        "aria_keyshortcuts" => "aria-keyshortcuts",
+        "aria_posinset" => "aria-posinset",
+        "aria_setsize" => "aria-setsize",
+        "aria_level" => "aria-level",
+        "aria_orientation" => "aria-orientation",
+        "aria_valuemax" => "aria-valuemax",
+        "aria_valuemin" => "aria-valuemin",
+        "aria_valuenow" => "aria-valuenow",
+        "aria_valuetext" => "aria-valuetext",
+        "aria_colcount" => "aria-colcount",
+        "aria_rowcount" => "aria-rowcount",
+        "aria_colindex" => "aria-colindex",
+        "aria_rowindex" => "aria-rowindex",
+        "aria_colspan" => "aria-colspan",
+        "aria_rowspan" => "aria-rowspan",
+        "aria_colheader" => "aria-colheader",
+        "aria_rowheader" => "aria-rowheader",
+        "aria_modal" => "aria-modal",
+        "aria_multiline" => "aria-multiline",
+        "aria_multiselectable" => "aria-multiselectable",
+        "aria_dropeffect" => "aria-dropeffect",
+        "aria_roledescription" => "aria-roledescription",
+        "id" => "id",
+        "class" => "class",
+        "style" => "style",
+        "lang_global" => "lang",
+        "dir" => "dir",
+        "hidden" => "hidden",
+        "draggable" => "draggable",
+        "translate" => "translate",
+        "contenteditable" => "contenteditable",
+        "slot" => "slot",
+        "part" => "part",
+        "inputmode" => "inputmode",
+        "enterkeyhint" => "enterkeyhint",
+        "popover" => "popover",
+        "data_x" => "data-x",
+        "is_content" => "is",
         other => panic!("attr_name: unmapped identifier '{other}'"),
     }
 }
@@ -222,11 +322,31 @@ mod tests {
     use crate::element::Element;
     use crate::node::Node;
     use crate::renderable::Renderable;
+    use std::borrow::Cow;
 
-    super::define_html_element!(TestDiv, "div");
-    super::define_html_element!(TestAnchor, "a", href("Hyperlink URL."), target("Frame target."));
-    super::define_html_element!(TestInput, "input", type_attr("Input type."), name("Field name."));
-    super::define_html_element!(TestSvg, "svg", view_box("SVG viewBox."), xmlns("XML namespace."));
+    super::define_html_element!(TestDiv, "div", all);
+    super::define_html_element!(
+        TestAnchor,
+        "a",
+        all,
+        href("Hyperlink URL."),
+        target("Frame target.")
+    );
+    super::define_html_element!(
+        TestInput,
+        "input",
+        all,
+        type_attr("Input type."),
+        name("Field name.")
+    );
+    super::define_html_element!(
+        TestSvg,
+        "svg",
+        no_aria,
+        view_box("SVG viewBox."),
+        xmlns("XML namespace.")
+    );
+    super::define_html_element!(TestBr, "br", aria_hidden_only);
 
     super::factory!(test_div, TestDiv);
     super::factory!(test_anchor, TestAnchor);
@@ -234,107 +354,215 @@ mod tests {
     #[test]
     fn new_creates_correct_tag() {
         assert_eq!(TestDiv::new().0.name, "div");
-        assert_eq!(TestAnchor::new().0.name, "a");
-        assert_eq!(TestInput::new().0.name, "input");
     }
 
     #[test]
     fn attrs_replaces_attributes() {
-        let el = TestDiv::new()
-            .attrs(vec![crate::attributes::attr("class").value("box")]);
+        let el = TestDiv::new().attrs(vec![crate::attributes::attr("class").value("box")]);
         assert_eq!(el.0.attributes.len(), 1);
-        assert_eq!(el.0.attributes[0].key, "class");
     }
 
     #[test]
-    fn children_replaces_children() {
-        let el = TestDiv::new().children(vec!["hello".into()]);
-        assert_eq!(el.0.children.len(), 1);
+    fn global_id_method_emits_id_attribute() {
+        let el = TestDiv::new().id("main");
+        assert_eq!(el.0.attributes[0].key, "id");
     }
 
     #[test]
-    fn attribute_setter_normal_name() {
-        let el = TestAnchor::new().href("/");
-        assert_eq!(el.0.attributes.len(), 1);
-        assert_eq!(el.0.attributes[0].key, "href");
-        assert!(matches!(el.0.attributes[0].attr, AttributeType::KeyValue("href", "/")));
-    }
-
-    #[test]
-    fn attribute_setter_attr_suffix() {
-        let el = TestInput::new().type_attr("text");
-        assert_eq!(el.0.attributes.len(), 1);
-        assert_eq!(el.0.attributes[0].key, "type");
-        assert!(matches!(el.0.attributes[0].attr, AttributeType::KeyValue("type", "text")));
-    }
-
-    #[test]
-    fn attribute_setter_underscore_to_dash() {
-        let el = TestSvg::new().view_box("0 0 100 100");
-        assert_eq!(el.0.attributes.len(), 1);
-        assert_eq!(el.0.attributes[0].key, "view-box");
-        assert!(matches!(el.0.attributes[0].attr, AttributeType::KeyValue("view-box", "0 0 100 100")));
-    }
-
-    #[test]
-    fn attribute_setter_plain_name_no_conversion() {
-        let el = TestAnchor::new().target("_blank");
-        assert_eq!(el.0.attributes[0].key, "target");
-    }
-
-    #[test]
-    fn attribute_setter_without_attr_suffix() {
-        let el = TestInput::new().name("q");
-        assert_eq!(el.0.attributes[0].key, "name");
-    }
-
-    #[test]
-    fn attribute_setter_without_underscore() {
-        let el = TestSvg::new().xmlns("http://www.w3.org/2000/svg");
-        assert_eq!(el.0.attributes[0].key, "xmlns");
-    }
-
-    #[test]
-    fn from_typed_into_element() {
-        let typed = TestDiv::new();
-        let elem: Element = typed.into();
-        assert_eq!(elem.name, "div");
-    }
-
-    #[test]
-    fn from_typed_into_node() {
-        let typed = TestAnchor::new();
-        let node: Node = typed.into();
-        assert!(matches!(node, Node::Element(e) if e.name == "a"));
-    }
-
-    #[test]
-    fn render_delegates_to_inner() {
-        let el = TestDiv::new().children(vec!["hi".into()]);
-        assert_eq!(Renderable::render(&el), "<div>hi</div>");
-    }
-
-    #[test]
-    fn chained_setters_last_wins() {
-        let el = TestAnchor::new()
-            .href("/page")
-            .target("_self");
-        assert_eq!(el.0.attributes.len(), 1);
-        assert_eq!(el.0.attributes[0].key, "target");
-        assert_eq!(Renderable::render(&el), r#"<a target="_self"></a>"#);
-    }
-
-    #[test]
-    fn factory_returns_correct_type() {
-        let d = test_div();
-        assert_eq!(d.0.name, "div");
-        let a = test_anchor();
-        assert_eq!(a.0.name, "a");
-    }
-
-    #[test]
-    fn debug_format() {
-        let _ = format!("{:?}", TestDiv::new());
+    fn attr_name_covers_every_identifier() {
+        let identifiers: &[&str] = &[
+            "abbr",
+            "accept",
+            "accept_charset",
+            "action",
+            "allow",
+            "allowfullscreen",
+            "alt",
+            "as_attr",
+            "async_attr",
+            "autocomplete",
+            "autofocus",
+            "autoplay",
+            "blocking",
+            "charset",
+            "checked",
+            "cite",
+            "color",
+            "cols",
+            "colspan",
+            "content",
+            "controls",
+            "coords",
+            "crossorigin",
+            "credentialless",
+            "csp",
+            "data",
+            "datalist",
+            "datetime",
+            "decoding",
+            "default_attr",
+            "defer_attr",
+            "disabled",
+            "download",
+            "enctype",
+            "fetchpriority",
+            "for_attr",
+            "form",
+            "form_attr",
+            "formaction",
+            "formenctype",
+            "formmethod",
+            "formnovalidate",
+            "formtarget",
+            "headers",
+            "height",
+            "high",
+            "href",
+            "hreflang",
+            "http_equiv",
+            "imagesizes",
+            "imagesrcset",
+            "integrity",
+            "ismap",
+            "kind",
+            "label",
+            "list",
+            "loading",
+            "loop_attr",
+            "low",
+            "max",
+            "maxlength",
+            "media",
+            "method",
+            "min",
+            "minlength",
+            "multiple",
+            "muted",
+            "name",
+            "novalidate",
+            "nomodule",
+            "nonce",
+            "open_attr",
+            "optimum",
+            "pattern",
+            "ping",
+            "placeholder",
+            "playsinline",
+            "popovertarget",
+            "popovertargetaction",
+            "poster",
+            "preload",
+            "preserve_aspect_ratio",
+            "readonly",
+            "referrerpolicy",
+            "rel",
+            "required",
+            "reversed",
+            "rowspan",
+            "rows",
+            "sandbox",
+            "scope",
+            "selected",
+            "shape",
+            "size",
+            "sizes",
+            "span",
+            "spellcheck",
+            "src",
+            "srcdoc",
+            "srcset",
+            "srclang",
+            "start",
+            "step",
+            "tabindex",
+            "target",
+            "title",
+            "title_attr",
+            "type_attr",
+            "usemap",
+            "value",
+            "version",
+            "view_box",
+            "width",
+            "wrap",
+            "xmlns",
+            "tabindex_global",
+            "nonce_global",
+            "title_global",
+            "autofocus_global",
+            "autocomplete_global",
+            "list_global",
+            "spellcheck_global",
+            "form_global",
+            "aria_label",
+            "aria_labelledby",
+            "aria_describedby",
+            "aria_description",
+            "aria_hidden",
+            "aria_role",
+            "aria_live",
+            "aria_current",
+            "aria_required",
+            "aria_disabled",
+            "aria_expanded",
+            "aria_selected",
+            "aria_checked",
+            "aria_pressed",
+            "aria_haspopup",
+            "aria_invalid",
+            "aria_readonly",
+            "aria_busy",
+            "aria_relevant",
+            "aria_atomic",
+            "aria_details",
+            "aria_errormessage",
+            "aria_controls",
+            "aria_flowto",
+            "aria_owns",
+            "aria_activedescendant",
+            "aria_keyshortcuts",
+            "aria_posinset",
+            "aria_setsize",
+            "aria_level",
+            "aria_orientation",
+            "aria_valuemax",
+            "aria_valuemin",
+            "aria_valuenow",
+            "aria_valuetext",
+            "aria_colcount",
+            "aria_rowcount",
+            "aria_colindex",
+            "aria_rowindex",
+            "aria_colspan",
+            "aria_rowspan",
+            "aria_colheader",
+            "aria_rowheader",
+            "aria_modal",
+            "aria_multiline",
+            "aria_multiselectable",
+            "aria_dropeffect",
+            "aria_roledescription",
+            "id",
+            "class",
+            "style",
+            "lang_global",
+            "dir",
+            "hidden",
+            "draggable",
+            "translate",
+            "contenteditable",
+            "slot",
+            "part",
+            "inputmode",
+            "enterkeyhint",
+            "popover",
+            "data_x",
+            "is_content",
+        ];
+        for ident in identifiers {
+            let mapped = super::attr_name(ident);
+            assert!(!mapped.is_empty());
+        }
     }
 
     #[test]

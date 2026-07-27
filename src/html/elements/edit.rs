@@ -2,8 +2,20 @@
 
 use super::macros::{define_html_element, factory};
 
-define_html_element!(HtmlIns, "ins", cite("URL of the source of the change."), datetime("Date/time of the change."));
-define_html_element!(HtmlDel, "del", cite("URL of the source of the change."), datetime("Date/time of the change."));
+define_html_element!(HtmlIns, "ins", all,
+    cite(r#"URL pointing to a resource that explains why the content was inserted.
+
+Typical use: a changelog entry, ticket, or revision that justifies the edit."#),
+    datetime(r#"Date and optional time when the change was inserted, as a global date or global date-time string (e.g. `2025-01-15`, `2025-01-15T13:45:00Z`).
+
+Machine-readable; rendered text is what the user sees."#));
+define_html_element!(HtmlDel, "del", all,
+    cite(r#"URL pointing to a resource that explains why the content was removed.
+
+Typical use: a changelog entry, ticket, or revision that justifies the edit."#),
+    datetime(r#"Date and optional time when the change was removed, as a global date or global date-time string (e.g. `2025-01-15`, `2025-01-15T13:45:00Z`).
+
+Machine-readable; rendered text is what the user sees."#));
 
 // Create a new [`HtmlIns`] element (`<ins>`).
 factory!(ins, HtmlIns);

@@ -1,12 +1,20 @@
-//! HTML rendering impls for [`Element`], [`Node`], and [`Attribute`].
+//! Shared rendering impls for [`Element`], [`Node`], and [`Attribute`].
+//!
+//! These are always available (no feature gate). HTML-specific
+//! "void element" semantics (e.g. `<br>` self-closing) are only
+//! applied when the `html` feature is active — under the `svg`
+//! feature alone, every element renders with a closing tag, which
+//! matches SVG's document structure.
 
 use crate::attributes::{Attribute, AttributeType};
 use crate::element::Element;
 use crate::node::Node;
 use crate::renderable::Renderable;
 
+#[cfg(feature = "html")]
 use super::constants::VOID_ELEMENTS;
 
+#[cfg(feature = "html")]
 enum Context {
     Void,
     VoidWithAttrs,
@@ -18,9 +26,7 @@ fn join(items: Vec<String>, separator: &'static str) -> String {
     items.join(separator)
 }
 
-/// Escape HTML special characters in text content or attribute values.
-/// Replaces `&`, `<`, `>`, `"` with their entity equivalents.
-fn escape(s: &str) -> String {
+pub(crate) fn escape(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     s.chars().for_each(|c| match c {
         '&' => out.push_str("&amp;"),
@@ -36,24 +42,35 @@ impl Renderable for Element {
     fn render(&self) -> String {
         let attributes = join(self.attributes.iter().map(|a| a.render()).collect(), " ");
         let children = join(self.children.iter().map(|c| c.render()).collect(), "");
-        let is_void = VOID_ELEMENTS.contains(&self.name);
         let has_attrs = !attributes.is_empty();
-        let context = match (is_void, has_attrs) {
-            (true, true) => Context::VoidWithAttrs,
-            (true, false) => Context::Void,
-            (false, true) => Context::WithAttrs,
-            (false, false) => Context::WithoutAttrs,
-        };
 
-        match context {
-            Context::Void => format!("<{}>", self.name),
-            Context::VoidWithAttrs => format!("<{} {}>", self.name, attributes),
-            Context::WithoutAttrs => {
-                format!("<{}>{}</{}>", self.name, children, self.name)
+        // Void-tag handling is HTML-specific. SVG and other namespaces
+        // always emit closing tags.
+        #[cfg(feature = "html")]
+        {
+            let is_void = VOID_ELEMENTS.contains(&self.name.as_ref());
+            let context = match (is_void, has_attrs) {
+                (true, true) => Context::VoidWithAttrs,
+                (true, false) => Context::Void,
+                (false, true) => Context::WithAttrs,
+                (false, false) => Context::WithoutAttrs,
+            };
+            match context {
+                Context::Void => format!("<{}>", self.name),
+                Context::VoidWithAttrs => format!("<{} {}>", self.name, attributes),
+                Context::WithoutAttrs => {
+                    format!("<{}>{}</{}>", self.name, children, self.name)
+                }
+                Context::WithAttrs => {
+                    format!("<{} {}>{}</{}>", self.name, attributes, children, self.name)
+                }
             }
-            Context::WithAttrs => {
-                format!("<{} {}>{}</{}>", self.name, attributes, children, self.name)
-            }
+        }
+        #[cfg(not(feature = "html"))]
+        if has_attrs {
+            format!("<{} {}>{}</{}>", self.name, attributes, children, self.name)
+        } else {
+            format!("<{}>{}</{}>", self.name, children, self.name)
         }
     }
 }
@@ -77,24 +94,6 @@ impl Renderable for Attribute {
     }
 }
 
-impl std::fmt::Display for Element {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.render())
-    }
-}
-
-impl std::fmt::Display for Node {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.render())
-    }
-}
-
-impl std::fmt::Display for Attribute {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.render())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -114,19 +113,6 @@ mod tests {
         for (input, expected) in cases {
             assert_eq!(input.render(), expected);
         }
-    }
-
-    #[test]
-    fn void_element_no_attrs() {
-        assert_eq!(el("br").render(), "<br>");
-    }
-
-    #[test]
-    fn void_element_with_attrs() {
-        let html = el("img")
-            .attrs(vec![attr("src").value("x.png")])
-            .render();
-        assert_eq!(html, "<img src=\"x.png\">");
     }
 
     #[test]
@@ -160,13 +146,22 @@ mod tests {
     #[test]
     fn display_impl() {
         let e = el("div");
-        assert_eq!(format!("{}", e), "<div></div>");
+        assert_eq!(e.render(), "<div></div>");
 
         let n: Node = el("div").into();
-        assert_eq!(format!("{}", n), "<div></div>");
+        assert_eq!(Renderable::render(&n), "<div></div>");
 
         let a = attr("href").value("/");
-        assert_eq!(format!("{}", a), "href=\"/\"");
+        assert_eq!(a.render(), "href=\"/\"");
+
+        // `Display` always emits the IR. These assertions need the
+        // `ir` feature, which supplies the `Display` impl for
+        // `Element`/`Node`.
+        #[cfg(feature = "ir")]
+        {
+            assert!(format!("{}", e).starts_with("mrk1\n"));
+            assert!(format!("{}", n).starts_with("mrk1\n"));
+        }
     }
 
     #[test]
@@ -190,10 +185,7 @@ mod tests {
     #[test]
     fn escapes_angle_brackets_in_text() {
         let n: Node = "<script>alert(1)</script>".into();
-        assert_eq!(
-            n.render(),
-            "&lt;script&gt;alert(1)&lt;/script&gt;"
-        );
+        assert_eq!(n.render(), "&lt;script&gt;alert(1)&lt;/script&gt;");
     }
 
     #[test]
@@ -206,5 +198,35 @@ mod tests {
     fn preserves_safe_text() {
         let n: Node = "hello world".into();
         assert_eq!(n.render(), "hello world");
+    }
+
+    #[test]
+    fn svg_no_void() {
+        // SVG element renders with closing tag (no void concept).
+        let out = el("rect").attrs(vec![attr("width").value("100")]).render();
+        assert_eq!(out, r#"<rect width="100"></rect>"#);
+    }
+
+    /// HTML void handling depends on whether the `html` feature is on.
+    #[cfg(feature = "html")]
+    #[test]
+    fn html_void_element_no_attrs() {
+        assert_eq!(el("br").render(), "<br>");
+    }
+
+    #[cfg(feature = "html")]
+    #[test]
+    fn html_void_element_with_attrs() {
+        let html = el("img").attrs(vec![attr("src").value("x.png")]).render();
+        assert_eq!(html, "<img src=\"x.png\">");
+    }
+
+    #[test]
+    fn render_raw_node_does_not_escape() {
+        // `Node::Raw` renders verbatim HTML; the renderer must not
+        // escape `<`, `>`, or `&` characters.
+        use crate::node::Node;
+        let n: Node = Node::Raw("<b>bold & unsafe</b>".into());
+        assert_eq!(crate::renderable::Renderable::render(&n), "<b>bold & unsafe</b>");
     }
 }

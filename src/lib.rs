@@ -8,55 +8,40 @@
 //!
 //! ## Features
 //!
-//! By default, `mrk` provides only the data model and builder API. Enable
-//! a feature for built-in rendering:
-//!
-//! - `html` — HTML rendering, 116 tag factories, void elements, escaping
+//! `mrk` splits capability into opt-in Cargo features. By default the
+//! crate provides only the data model (no rendering, no persistence):
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = { version = "0.6.1", features = ["html"] }
+//! mrk = "0.6.1"            # data model only
 //! ```
 //!
-//! ## Building trees without rendering
+//! ### Available features
 //!
-//! Without any feature, `mrk` builds trees but doesn't render them:
+//! | Feature       | Pulls in                                         |
+//! |---------------|--------------------------------------------------|
+//! | *(default)*   | data model: `el`, `attr`, `Node`, `Element`     |
+//! | `html`        | 114 HTML tag factories, void elements, escaping |
+//! | `svg`         | 67 SVG 2 tag factories, presentation attrs      |
+//! | `components`  | [`Component`] + [`Expr`] trees, [`Props`]        |
+//! | `ir`          | `[`.mrk`][crate::ir] wire format codec (depends on `components`) |
+
+//! Combine features freely:
 //!
-//! ```
-//! use mrk::*;
-//!
-//! let tree = el("custom-tag")
-//!     .attrs(vec![attr("name").value("value")])
-//!     .children(nodes!["data"]);
-//!
-//! assert_eq!(tree.name, "custom-tag");
-//! ```
-//!
-//! Implement [`Renderable`] for your own renderer, or enable a feature
-//! to use a built-in one.
-//!
-//! ## Extending with [`Renderable`]
-//!
-//! Any type can be rendered by implementing [`Renderable`]:
-//!
-//! ```
-//! use mrk::*;
-//!
-//! struct Greeting(&'static str);
-//!
-//! impl Renderable for Greeting {
-//!     fn render(&self) -> String {
-//!         format!("<p>Hello, {}!</p>", self.0)
-//!     }
-//! }
-//!
-//! assert_eq!(render(Greeting("world")), "<p>Hello, world!</p>");
+//! ```toml
+//! [dependencies]
+//! mrk = { version = "0.6.1", features = ["html", "svg", "ir"] }
 //! ```
 
+#![deny(missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 mod attributes;
+mod constants;
 mod element;
 mod macros;
 mod node;
+mod render_core;
 mod renderable;
 
 pub use attributes::{Attribute, AttributeType, attr};
@@ -64,5 +49,55 @@ pub use element::{Element, el};
 pub use node::Node;
 pub use renderable::{Renderable, render};
 
+/// Templated component data model: [`Component`], [`Expr`], [`Props`],
+/// and the render engine.
+///
+/// Opt-in via the `components` Cargo feature. Pulled in by `ir`.
+///
+/// See the [module documentation](self) for an overview.
+#[cfg(feature = "components")]
+pub mod components;
+
+#[doc(inline)]
+#[cfg(feature = "components")]
+pub use components::{
+    arm, component, either, list_expr, literal, map, match_on, maybe, prop, wrap, Component,
+    Expr, IntoExpr, MatchArm, Number, NumberKind, PropType, Props, RenderError,
+};
+
+/// The `.mrk` wire format: encode/decode a [`Component`] to bytes or
+/// UTF-8 strings.
+///
+/// Opt-in via the `ir` Cargo feature (which depends on `components`).
+/// Provides [`Mrk`] (encode/decode), [`ParseError`], and
+/// [`MAX_PAYLOAD`].
+#[cfg(feature = "ir")]
+pub mod ir;
+
+#[doc(inline)]
+#[cfg(feature = "ir")]
+pub use ir::{MAX_PAYLOAD, Mrk, ParseError};
+
+#[cfg(all(test, feature = "components"))]
+mod components_tests {
+    include!("components/tests.rs");
+}
+
+#[cfg(all(test, feature = "ir"))]
+mod ir_tests {
+    include!("ir/tests.rs");
+}
+
 #[cfg(feature = "html")]
 pub mod html;
+
+#[cfg(feature = "svg")]
+pub mod svg;
+
+/// Code-generation helpers shared by the `html` and `svg` macro
+/// modules. The file lives at the workspace root (not under `src/`),
+/// gated on either `html` or `svg` being active. See comments at the
+/// top of the file for the coverage rationale.
+#[cfg(any(feature = "html", feature = "svg"))]
+#[path = "../shared/macros.rs"]
+mod shared_macros;
