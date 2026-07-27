@@ -17,7 +17,7 @@ Everything here is gated behind the **`components`** Cargo feature
 (off by default). Enable it like:
 
 ```toml
-mrk = { version = "0.6.1", features = ["components"] }
+mrk = { version = "0.7.0", features = ["components"] }
 ```
 
 The `ir` feature depends on `components` and adds the on-the-wire

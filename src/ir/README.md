@@ -28,7 +28,7 @@ Everything here is gated behind the **`ir`** Cargo feature (off by
 default) — which **depends on** `components`. Enable it like:
 
 ```toml
-mrk = { version = "0.6.1", features = ["ir"] }
+mrk = { version = "0.7.0", features = ["ir"] }
 ```
 
 `ir` brings in the `components` module transitively.

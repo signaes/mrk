@@ -13,7 +13,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = "0.6.1"            # data model only
+//! mrk = "0.7.0"            # data model only
 //! ```
 //!
 //! ### Available features
@@ -30,7 +30,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = { version = "0.6.1", features = ["html", "svg", "ir"] }
+//! mrk = { version = "0.7.0", features = ["html", "svg", "ir"] }
 //! ```
 
 #![deny(missing_docs)]
@@ -61,8 +61,8 @@ pub mod components;
 #[doc(inline)]
 #[cfg(feature = "components")]
 pub use components::{
-    arm, component, either, list_expr, literal, map, match_on, maybe, prop, wrap, Component,
-    Expr, IntoExpr, MatchArm, Number, NumberKind, PropType, Props, RenderError,
+    Component, Expr, IntoExpr, MatchArm, Number, NumberKind, PropType, Props, RenderError, arm,
+    component, either, list_expr, literal, map, match_on, maybe, prop, wrap,
 };
 
 /// The `.mrk` wire format: encode/decode a [`Component`] to bytes or
