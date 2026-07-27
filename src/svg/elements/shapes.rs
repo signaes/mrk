@@ -76,7 +76,6 @@ svg_factory!(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::renderable::Renderable;
 
     fn attr_list(pairs: &[(&'static str, &'static str)]) -> Vec<crate::attributes::Attribute> {
         use crate::attributes::attr;

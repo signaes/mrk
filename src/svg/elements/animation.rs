@@ -95,7 +95,6 @@ svg_factory!(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::renderable::Renderable;
 
     #[test]
     fn animate_with_dur() {

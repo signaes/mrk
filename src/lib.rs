@@ -93,11 +93,3 @@ pub mod html;
 
 #[cfg(feature = "svg")]
 pub mod svg;
-
-/// Code-generation helpers shared by the `html` and `svg` macro
-/// modules. The file lives at the workspace root (not under `src/`),
-/// gated on either `html` or `svg` being active. See comments at the
-/// top of the file for the coverage rationale.
-#[cfg(any(feature = "html", feature = "svg"))]
-#[path = "../shared/macros.rs"]
-mod shared_macros;

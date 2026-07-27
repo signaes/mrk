@@ -120,7 +120,6 @@ svg_factory!(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::renderable::Renderable;
 
     #[test]
     fn svg_root_attrs() {
