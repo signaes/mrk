@@ -96,6 +96,13 @@ macro_rules! __from_impls {
                 self.0.render()
             }
         }
+
+        #[cfg(feature = "components")]
+        impl $crate::components::IntoExpr for $name {
+            fn into_expr(self) -> $crate::components::Expr {
+                $crate::components::Expr::Literal(self.0)
+            }
+        }
     };
 }
 pub(crate) use __from_impls;
@@ -1000,6 +1007,17 @@ mod tests {
         let _n: crate::node::Node = s2.into();
         let s3 = TestSvgNoAttrs::new();
         let _r = crate::renderable::Renderable::render(&s3);
+    }
+
+    /// Coverage for the `IntoExpr` impl emitted by `__from_impls!`
+    /// on SVG wrappers when the `components` feature is active.
+    #[cfg(feature = "components")]
+    #[test]
+    fn svg_wrapper_into_expr() {
+        use crate::components::{Expr, IntoExpr};
+        let expr = TestSvgNoAttrs::new().into_expr();
+        let is_lit = matches!(expr, Expr::Literal(ref el) if el.name == "svg");
+        assert!(is_lit, "expected Literal(svg), got: {expr:?}");
     }
 
     /// Exercise the `Default::default()` impl produced by

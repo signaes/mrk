@@ -119,6 +119,13 @@ macro_rules! __from_impls {
                 self.0.render()
             }
         }
+
+        #[cfg(feature = "components")]
+        impl $crate::components::IntoExpr for $name {
+            fn into_expr(self) -> $crate::components::Expr {
+                $crate::components::Expr::Literal(self.0)
+            }
+        }
     };
 }
 pub(crate) use __from_impls;
@@ -1153,5 +1160,16 @@ mod tests {
         let _n: crate::node::Node = div2.into();
         let div3 = TestDiv::new();
         let _s = crate::renderable::Renderable::render(&div3);
+    }
+
+    /// Coverage for the `IntoExpr` impl emitted by `__from_impls!`
+    /// when the `components` feature is active.
+    #[cfg(feature = "components")]
+    #[test]
+    fn html_wrapper_into_expr() {
+        use crate::components::{Expr, IntoExpr};
+        let expr = TestDiv::new().id("main").into_expr();
+        let is_lit = matches!(expr, Expr::Literal(ref el) if el.name == "div" && !el.attributes.is_empty());
+        assert!(is_lit, "expected Literal(div with attrs), got: {expr:?}");
     }
 }

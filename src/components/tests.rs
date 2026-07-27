@@ -1627,3 +1627,32 @@ fn wrap_dynamic_attr_render_expr_error() {
     let err = c.render(&Props::new()).unwrap_err();
     assert!(matches!(err, RenderError::TypeMismatch { .. }));
 }
+
+// =======================================================================
+// HTML/SVG factories inside comp! (requires both features)
+// =======================================================================
+
+#[cfg(feature = "html")]
+#[test]
+fn html_factory_inside_comp_macro() {
+    use crate::html::script;
+    let c = component("c", crate::comp!(body, [script().src("app.js")]));
+    let p = Props::new();
+    let nodes = c.render(&p).expect("render");
+    let html: String = nodes.iter().map(|n| n.render()).collect();
+    assert_eq!(html, r#"<body><script src="app.js"></script></body>"#);
+}
+
+#[cfg(feature = "svg")]
+#[test]
+fn svg_factory_inside_comp_macro() {
+    use crate::svg::circle;
+    let c = component("c", crate::comp!(g, [circle().cx("50").cy("50").r("25")]));
+    let p = Props::new();
+    let nodes = c.render(&p).expect("render");
+    let html: String = nodes.iter().map(|n| n.render()).collect();
+    assert!(
+        html.contains(r#"r="25""#) && html.contains("circle"),
+        "unexpected render: {html}"
+    );
+}
