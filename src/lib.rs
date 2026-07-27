@@ -13,7 +13,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = "0.7.1"            # data model only
+//! mrk = "0.7.2"            # data model only
 //! ```
 //!
 //! ### Available features
@@ -30,7 +30,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = { version = "0.7.1", features = ["html", "svg", "ir"] }
+//! mrk = { version = "0.7.2", features = ["html", "svg", "ir"] }
 //! ```
 
 #![deny(missing_docs)]
