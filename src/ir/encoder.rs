@@ -74,6 +74,9 @@ pub(crate) fn encode_element(e: &Element, depth: usize, out: &mut Vec<u8>) {
                 out.push(b'\n');
             }
             Node::Element(c) => encode_element(c, depth + 1, out),
+            Node::Expr(_) => {
+                unreachable!("Node::Expr must be resolved during Component::render, not during IR encoding")
+            }
         }
     }
 }
@@ -221,6 +224,9 @@ pub(crate) fn encode_node(n: &Node, depth: usize, out: &mut Vec<u8>) {
             // `encode_element` writes its own indent at `depth`, so
             // we do not emit one here.
             encode_element(el, depth, out);
+        }
+        Node::Expr(_) => {
+            unreachable!("Node::Expr must be resolved during Component::render, not during IR encoding")
         }
     }
 }

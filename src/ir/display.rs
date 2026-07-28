@@ -28,6 +28,9 @@ impl fmt::Display for Node {
             Node::Text(t) => f.write_str(t),
             Node::Raw(r) => f.write_str(r),
             Node::Element(e) => f.write_str(&Mrk::to_string(e)),
+            Node::Expr(_) => {
+                unreachable!("Node::Expr must be resolved during Component::render, not during Display")
+            }
         }
     }
 }

@@ -15,6 +15,11 @@ use std::borrow::Cow;
 
 /// A single child of an element.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "components",
+    doc = "When the `components` feature is enabled, a fourth variant [`Node::Expr`] exists."
+)]
+#[allow(unused)]
 pub enum Node {
     /// Escaped text content. Special HTML chars (`<`, `>`, `&`, `"`) are
     /// replaced with their entity equivalents when rendered.
@@ -25,6 +30,15 @@ pub enum Node {
     /// input (e.g., pre-built HTML from a markdown library). Construct via
     /// `Raw::str(...)` or `Raw::string(...)` (in the `html` module).
     Raw(Cow<'static, str>),
+    /// An unevaluated expression tree, used inside component templates.
+    ///
+    /// Typed wrappers (`Div`, `Span`, etc.) and [`Expr`](crate::Expr)
+    /// values implement [`Into<Node>`] via this variant. The render
+    /// engine resolves `Node::Expr` eagerly during
+    /// [`Component::render`](crate::Component::render), so it never
+    /// appears in the final output.
+    #[cfg(feature = "components")]
+    Expr(crate::components::Expr),
 }
 
 impl From<&'static str> for Node {
@@ -39,9 +53,22 @@ impl From<String> for Node {
     }
 }
 
+impl From<Cow<'static, str>> for Node {
+    fn from(s: Cow<'static, str>) -> Node {
+        Node::Text(s)
+    }
+}
+
 impl From<Element> for Node {
     fn from(e: Element) -> Self {
         Node::Element(e)
+    }
+}
+
+#[cfg(feature = "components")]
+impl From<crate::components::Expr> for Node {
+    fn from(e: crate::components::Expr) -> Self {
+        Node::Expr(e)
     }
 }
 
@@ -65,6 +92,24 @@ mod tests {
         let debug = format!("{:?}", n);
         assert!(debug.contains("Text"));
         assert!(debug.contains("dynamic"));
+    }
+
+    #[test]
+    fn from_cow_borrowed_text() {
+        let borrowed: Cow<'static, str> = Cow::Borrowed("static");
+        let n: Node = borrowed.into();
+        let debug = format!("{:?}", n);
+        assert!(debug.contains("Text"));
+        assert!(debug.contains("static"));
+    }
+
+    #[test]
+    fn from_cow_owned_text() {
+        let owned: Cow<'static, str> = Cow::Owned(String::from("owned-cow"));
+        let n: Node = owned.into();
+        let debug = format!("{:?}", n);
+        assert!(debug.contains("Text"));
+        assert!(debug.contains("owned-cow"));
     }
 
     #[test]

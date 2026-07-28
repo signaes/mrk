@@ -16,40 +16,43 @@
 //!
 //! ```
 //! use mrk::*;
+//! use mrk::components::html::{div, span};
 //!
-//! let card = component(
-//!     "card",
-//!     wrap(
-//!         Element::new("div").attrs(vec![attr("class").value("card")]),
-//!         list![
-//!             prop("title"),
-//!             either("is_admin", prop("admin_tools"), prop("user_tools")),
-//!         ],
-//!     ),
-//! );
+//! component!(Card, {
+//!     div().class(prop("class")).children(vec![
+//!         Node::Element(el("custom")),
+//!         Node::Element(el("span")),
+//!     ])
+//! });
 //! ```
 //!
 //! # Architecture
 //!
 //! - [`Component`] — the tree's name and root expression.
+//! - [`ComponentElement`] — base struct for typed wrappers; the
+//!   `html::Div`, `html::Span`, `svg::Circle` etc. all wrap this.
+//! - [`ComponentAttribute`] — static or dynamic attribute on a
+//!   [`ComponentElement`].
 //! - [`Props`] — typed input values keyed by `Cow<'static, str>`.
 //! - [`PropType`], [`Number`], [`NumberKind`] — the value types that
 //!   make up a `Props` bag.
 //! - [`Expr`], [`MatchArm`] — the expression-tree node types.
 //! - [`IntoExpr`] + the [`list!`] macro — ergonomic `Expr` builders.
-//! - Constructor helpers ([`literal`], [`prop`], [`list_expr`],
-//!   [`either`], [`maybe`], [`map`], [`match_on`], [`arm`], [`wrap`])
-//!   — short-named builders that avoid `Expr::…` ceremony at call sites.
+//! - Macros: [`component!`], [`switch!`], [`text!`], [`list!`],
+//!   [`nodes!`] — declarative templates.
 //! - [`Component::render`] + [`RenderError`] — turning a tree +
 //!   `Props` into a `Vec<Node>`.
 //!
 //! See [`crate::ir`] for the wire-format codec that round-trips a
 //! [`Component`] and back.
 
-mod comp_macro;
-mod ctx;
+mod element;
 mod expr;
+mod macros;
 mod props;
+
+pub mod html;
+pub mod svg;
 
 use std::borrow::Cow;
 use std::fmt;
@@ -59,14 +62,9 @@ use crate::element::Element;
 use crate::node::Node;
 use crate::renderable::Renderable;
 
-pub use ctx::{ExprCtx, MatchEntry, Otherwise};
-pub use expr::{arm, component, either, list_expr, literal, map, match_on, maybe, prop, wrap};
+pub use element::{ComponentAttribute, ComponentElement};
+pub use expr::{prop, Expr, IntoExpr, MatchArm, WrappedAttribute};
 pub use props::{Number, NumberKind, PropType, Props};
-
-// Re-export the expression-tree public API at the crate root.
-// Done here (rather than via `pub use expr::…`) so the doc-pointers
-// resolve against the crate-root level.
-pub use expr::{Expr, IntoExpr, MatchArm, WrappedAttribute};
 
 // =====================================================================
 // Component
@@ -78,6 +76,8 @@ pub use expr::{Expr, IntoExpr, MatchArm, WrappedAttribute};
 /// `Vec<Node>`. Encoded/decoded through the `.mrk` wire format (see
 /// [`crate::ir::Mrk`]) — there are no closures, no `Fn` types, no
 /// opaque values. The whole tree is data.
+///
+/// Build with [`component!`](crate::component).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Component {
     /// Identifier used as the root of the `.mrk` representation.
@@ -94,43 +94,6 @@ impl Component {
     /// typing (`Match`, `Either`, `Maybe`, `Map`).
     pub fn render(&self, props: &Props) -> Result<Vec<Node>, RenderError> {
         render_expr(&self.expr, props)
-    }
-
-    /// Build a `Component` from a closure over [`ExprCtx`].
-    ///
-    /// The closure runs once at build time, producing a plain [`Expr`]
-    /// tree. No closures, no `Fn` types, no opaque values remain on
-    /// the resulting `Component` — it is fully serializable via the
-    /// `.mrk` wire format (see [`crate::ir::Mrk`]).
-    ///
-    /// `R` is any type that converts into [`Expr`] ( [`Expr`]
-    /// itself, [`Element`], [`Node`], `Box<Expr>`, etc.).
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use mrk::*;
-    /// use mrk::components::ExprCtx;
-    ///
-    /// let card = Component::build("card", |ctx| ctx.wrap(
-    ///     Element::new("div"),
-    ///     list![ctx.prop("name")],
-    /// ));
-    ///
-    /// let mut props = Props::new();
-    /// props.insert("name", PropType::String("Alice".into()));
-    /// let nodes = card.render(&props).unwrap();
-    /// assert_eq!(nodes.len(), 1);
-    /// ```
-    pub fn build<R: Into<Expr>>(
-        name: impl Into<Cow<'static, str>>,
-        build: impl FnOnce(ExprCtx) -> R,
-    ) -> Component {
-        let expr = build(ExprCtx).into();
-        Component {
-            name: name.into(),
-            expr,
-        }
     }
 }
 
@@ -285,7 +248,16 @@ fn render_expr(expr: &Expr, props: &Props) -> Result<Vec<Node>, RenderError> {
                 },
             )])
         }
-        Expr::LiteralChildren(nodes) => Ok(nodes.clone()),
+        Expr::LiteralChildren(nodes) => {
+            let mut out = Vec::with_capacity(nodes.len());
+            for node in nodes {
+                match node {
+                    Node::Expr(expr) => out.extend(render_expr(expr, props)?),
+                    other => out.push(other.clone()),
+                }
+            }
+            Ok(out)
+        }
     }
 }
 
@@ -317,7 +289,6 @@ fn require_bool(
         }),
     }
     .inspect_err(|e| {
-        // `ctx` is reserved for a future error-context annotation.
         let _ = ctx;
         let _ = e;
     })
@@ -344,6 +315,3 @@ fn require_list<'a>(
         }),
     }
 }
-
-// Re-export the macro crate-wide.
-pub use crate::list;

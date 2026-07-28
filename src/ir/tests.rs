@@ -9,7 +9,7 @@
 use std::borrow::Cow;
 
 use crate::attributes::attr;
-use crate::components::component;
+use crate::components::Component;
 use crate::element::el;
 use crate::ir::{Mrk, ParseError};
 use crate::node::Node;
@@ -471,12 +471,12 @@ fn component_round_trip_with_raw_literal_children() {
     // the `b'R' =>` parser arms, and the `Expr::LiteralChildren`
     // encode/decode paths. Constructs a component containing
     // `Expr::LiteralChildren` with raw HTML — no `html::Raw` helper.
-    use crate::components::{component, Expr};
+    use crate::components::{Component, Expr};
 
-    let c = component(
-        "rc",
-        Expr::LiteralChildren(vec![Node::Raw("<b>x</b>".into())]),
-    );
+    let c = Component {
+        name: Cow::Borrowed("rc"),
+        expr: Expr::LiteralChildren(vec![Node::Raw("<b>x</b>".into())]),
+    };
     let bytes = Mrk::bytes_component(&c);
     let back = Mrk::from_bytes_component(&bytes).expect("decode");
     assert_eq!(c, back);
@@ -711,14 +711,14 @@ fn component_expr_w_missing_body_count_field() {
 #[test]
 fn round_trip_w_with_bool_attribute() {
     use crate::components::{Expr, WrappedAttribute};
-    let c = component(
-        "c",
-        Expr::Wrap {
+    let c = Component {
+        name: Cow::Borrowed("c"),
+        expr: Expr::Wrap {
             name: "div".into(),
             attrs: vec![WrappedAttribute::Static(attr("checked"))],
             body: vec![],
         },
-    );
+    };
     let bytes = Mrk::bytes_component(&c);
     let back = Mrk::from_bytes_component(&bytes).expect("decode");
     assert_eq!(c, back);
@@ -1345,10 +1345,10 @@ fn component_literal_children_with_raw_and_element() {
     let raw_node = Raw::str("<em>x</em>");
     let el_node = Node::Element(el("p"));
     let text_node = Node::Text("hi".into());
-    let c = component(
-        "lc",
-        Expr::LiteralChildren(vec![text_node, raw_node, el_node]),
-    );
+    let c = Component {
+        name: Cow::Borrowed("lc"),
+        expr: Expr::LiteralChildren(vec![text_node, raw_node, el_node]),
+    };
     let s = Mrk::to_string_component(&c);
     eprintln!("encoded:\n{}", s);
     let bytes = Mrk::bytes_component(&c);
@@ -1363,12 +1363,26 @@ fn component_literal_children_with_text_and_element() {
 
     let el_node = Node::Element(el("p"));
     let text_node = Node::Text("hi".into());
-    let c = component(
-        "lc",
-        Expr::LiteralChildren(vec![text_node, el_node]),
-    );
+    let c = Component {
+        name: Cow::Borrowed("lc"),
+        expr: Expr::LiteralChildren(vec![text_node, el_node]),
+    };
     let bytes = Mrk::bytes_component(&c);
     let back = Mrk::from_bytes_component(&bytes).expect("decode");
+    assert_eq!(c, back);
+}
+
+#[test]
+fn component_to_string_round_trip() {
+    use crate::components::Expr;
+
+    let c = Component {
+        name: Cow::Borrowed("greet"),
+        expr: Expr::Prop("name".into()),
+    };
+    let s = Mrk::to_string_component(&c);
+    assert!(s.starts_with("mrk1\n"));
+    let back = Mrk::from_string_component(&s).expect("decode");
     assert_eq!(c, back);
 }
 
@@ -1384,11 +1398,14 @@ fn round_trip_n_expr_with_raw_and_element() {
         Raw::str("<br/>"),
         Node::Element(el("span")),
     ]);
-    let c = component("wrap_with_n", Expr::Wrap {
+    let c = Component {
+        name: Cow::Borrowed("wrap_with_n"),
+        expr: Expr::Wrap {
         name: "div".into(),
         attrs: vec![],
         body: vec![Box::new(body)],
-    });
+    },
+    };
     let bytes = Mrk::bytes_component(&c);
     let back = Mrk::from_bytes_component(&bytes).expect("decode");
     assert_eq!(c, back);

@@ -64,6 +64,10 @@ impl Renderable for Node {
             Node::Text(s) => escape(s.as_ref()),
             Node::Element(e) => e.render(),
             Node::Raw(s) => s.as_ref().to_string(),
+            #[cfg(feature = "components")]
+            Node::Expr(_) => {
+                unreachable!("Node::Expr must be resolved during Component::render, not during HTML rendering")
+            }
         }
     }
 }

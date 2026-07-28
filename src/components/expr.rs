@@ -1,13 +1,16 @@
-//! Expression trees and the constructor helpers that build them.
+//! Expression trees and the [`IntoExpr`] trait that supports them.
 //!
-//! An [`Expr`] is a tree node. The accompanying [`IntoExpr`] trait
-//! plus the [`list` macro (`list!`) macro let you compose trees in literals style
-//! instead of writing the nested `Box<Expr>` structure by hand.
+//! An [`Expr`] is a tree node. The [`IntoExpr`] trait plus the
+//! [`list!`] macro let you compose trees in literal style instead of
+//! writing the nested `Box<Expr>` structure by hand.
 //!
-//! All constructor helpers (`literal`, `prop`, `list_expr`, `either`,
-//! `maybe`, `map`, `match_on`, `arm`, `wrap`, `component`) are plain
-//! functions on the crate root; they exist so call sites read
-//! naturally without spelling out `Expr::…`.
+//! Most construction is done through macros: [`component!`] is the
+//! entry point, [`switch!`](crate::switch) builds match expressions,
+//! and [`text!`](crate::text) concatenates text. The only remaining
+//! free function builder is [`prop`], used for runtime prop-name keys.
+//!
+//! [`component!`]: crate::component
+//! [`prop`]: crate::components::prop
 
 use std::borrow::Cow;
 
@@ -18,24 +21,17 @@ use crate::node::Node;
 /// An attribute on a [`Expr::Wrap`] element, either static or dynamic.
 ///
 /// - [`Static`](WrappedAttribute::Static) — a compile-time-known
-///   [`Attribute`] produced by [`wrap()`] or the closure DSL.
+///   [`Attribute`] produced by the [`ComponentElement`](super::ComponentElement)
+///   base struct's `attr(key)` builder.
 /// - [`Dynamic`](WrappedAttribute::Dynamic) — a runtime-evaluated
-///   attribute produced only by the [`comp!`] macro. The key is the
-///   attribute name and the `Expr` is evaluated at render time; its
-///   text form becomes the attribute value.
-///
-/// Dynamic attributes are **only** available through [`comp!`]. The
-/// closure DSL and direct `Expr::Wrap` construction always produce
-/// [`Static`](WrappedAttribute::Static) attributes.
+///   attribute produced by the typed wrapper methods (`div().class(...)`
+///   etc.). The key is the attribute name and the `Expr` is evaluated
+///   at render time; its text form becomes the attribute value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WrappedAttribute {
     /// A compile-time-known attribute.
     Static(Attribute),
-    /// A runtime-evaluated attribute (`comp!` only).
-    ///
-    /// The `Cow` is the attribute key (e.g. `"class"`), and the `Expr`
-    /// is evaluated at render time against `Props` to produce the
-    /// attribute value.
+    /// A runtime-evaluated attribute.
     Dynamic(Cow<'static, str>, Expr),
 }
 
@@ -125,8 +121,9 @@ pub enum Expr {
     /// Introduce a new element. The body is a sequence of expressions
     /// whose eval results are concatenated as children.
     ///
-    /// `wrap(el, body)` (see [`wrap`]) pre-pends the `Element`'s existing
-    /// static children (wrapped in a `LiteralChildren`) to `body`.
+    /// Produced by [`ComponentElement`](super::ComponentElement)
+    /// (and the typed wrappers that wrap it) when used inside
+    /// [`component!`](crate::component).
     Wrap {
         /// Tag name.
         name: Cow<'static, str>,
@@ -138,9 +135,6 @@ pub enum Expr {
     },
 
     /// A pre-evaluated list of nodes. Eval returns these as-is.
-    ///
-    /// Used to splice an `Element`'s static children into a `Wrap` body
-    /// via [`wrap`].
     LiteralChildren(Vec<Node>),
 }
 
@@ -158,8 +152,9 @@ pub struct MatchArm {
 
 /// Implicit conversion into an [`Expr`].
 ///
-/// Used by the [`list` macro (`list!`) macro so that `Element`, `Expr`, `Box<Expr>`,
-/// and `Node` can be mixed freely inside a list literal.
+/// Used by the [`list!`] macro, [`text!`](crate::text), and any other
+/// macro that wants to accept mixed content (e.g. `Element`, `Expr`,
+/// `Box<Expr>`, `Node`, `&str`, and typed wrappers).
 pub trait IntoExpr {
     /// Consume `self` and produce an `Expr`.
     fn into_expr(self) -> Expr;
@@ -225,117 +220,20 @@ macro_rules! list {
     };
 }
 
-/// `Expr::Literal(el)`.
-pub fn literal(el: Element) -> Expr {
-    Expr::Literal(el)
-}
-
 /// `Expr::Prop(key)`.
 ///
 /// Lenient at render time: a missing or wrong-typed prop renders as an
 /// empty text node.
+///
+/// This free function is the escape hatch for runtime prop names:
+///
+/// ```ignore
+/// let key = format!("dynamic-{}", some_var);
+/// let expr = prop(key);
+/// ```
 pub fn prop(key: impl Into<Cow<'static, str>>) -> Expr {
     Expr::Prop(key.into())
 }
 
-/// `Expr::List(items)`.
-pub fn list_expr(items: Vec<Box<Expr>>) -> Expr {
-    Expr::List(items)
-}
-
-/// `Expr::Either { condition, then, otherwise }`.
-pub fn either(
-    condition: impl Into<Cow<'static, str>>,
-    then: Expr,
-    otherwise: Expr,
-) -> Expr {
-    Expr::Either {
-        condition: condition.into(),
-        then: Box::new(then),
-        otherwise: Box::new(otherwise),
-    }
-}
-
-/// `Expr::Maybe { condition, then }`.
-pub fn maybe(
-    condition: impl Into<Cow<'static, str>>,
-    then: Expr,
-) -> Expr {
-    Expr::Maybe {
-        condition: condition.into(),
-        then: Box::new(then),
-    }
-}
-
-/// `Expr::Map { input, body }`.
-pub fn map(
-    input: impl Into<Cow<'static, str>>,
-    body: Expr,
-) -> Expr {
-    Expr::Map {
-        input: input.into(),
-        body: Box::new(body),
-    }
-}
-
-/// `Expr::Match { key, arms, default }`.
-pub fn match_on(
-    key: impl Into<Cow<'static, str>>,
-    arms: Vec<MatchArm>,
-    default: Expr,
-) -> Expr {
-    Expr::Match {
-        key: key.into(),
-        arms,
-        default: Box::new(default),
-    }
-}
-
-/// One [`MatchArm`].
-///
-/// `value` is matched against the prop's string form; `result` is the
-/// expression evaluated when the arm matches.
-pub fn arm(
-    value: impl Into<Cow<'static, str>>,
-    result: Expr,
-) -> MatchArm {
-    MatchArm {
-        value: value.into(),
-        result: Box::new(result),
-    }
-}
-
-/// `Wrap { name = el.name, attrs = [Static(a) for a in el.attrs], body = [el.children..., body] }`.
-///
-/// The `Element`'s existing static children are spliced in before
-/// `body`. If the `Element` has no children, `body` is the only
-/// expression in the `Wrap` body.
-///
-/// All attributes are wrapped as [`WrappedAttribute::Static`]. Use
-/// [`comp!`] for dynamic attributes.
-pub fn wrap(el: Element, body: Expr) -> Expr {
-    let mut body_exprs: Vec<Box<Expr>> = Vec::new();
-    if !el.children.is_empty() {
-        body_exprs.push(Box::new(Expr::LiteralChildren(el.children)));
-    }
-    body_exprs.push(Box::new(body));
-    Expr::Wrap {
-        name: el.name,
-        attrs: el.attributes.into_iter().map(WrappedAttribute::Static).collect(),
-        body: body_exprs,
-    }
-}
-
-/// `Component { name, expr }`.
-pub fn component(name: impl Into<Cow<'static, str>>, expr: Expr) -> Component {
-    Component {
-        name: name.into(),
-        expr,
-    }
-}
-
 // Use `super::Component` to break the cycle: `expr.rs` is included from
 // `mod.rs`, so `Component` lives in `super`.
-// (Kept here so all Expr-things stay together; the type itself is
-// re-exported from `mod.rs`.)
-use super::Component;
