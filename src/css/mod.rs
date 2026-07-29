@@ -1,0 +1,143 @@
+//! Type-safe CSS authoring.
+//!
+//! `mrk::css` provides a fluent, type-safe API for building CSS
+//! stylesheets that mirrors the data model used by `mrk::html` and
+//! `mrk::svg`. Compose [`StyleSheet`]s from [`Rule`]s and at-rules,
+//! attach declarations with strongly-typed property setters, and
+//! render to a canonical pretty-printed CSS string.
+//!
+//! ## Feature flag
+//!
+//! This module is gated behind the `css` Cargo feature (off by
+//! default):
+//!
+//! ```toml
+//! mrk = { version = "0.8.0", features = ["css"] }
+//! ```
+//!
+//! The module is independent of `html`, `svg`, `components`, and
+//! `ir`. CSS conversion math and the Color 4 parser are pure
+//! functions of the typed values; no other `mrk` modules are pulled
+//! in.
+//!
+//! ## Quick start
+//!
+//! ```ignore
+//! use mrk::css::*;
+//!
+//! let sheet = StyleSheet::new()
+//!     .rule(|s| s.selector(".btn").block(|r| {
+//!         r.color(Color::named("rebeccapurple"))
+//!          .padding(Length::px(8), Length::px(16))
+//!          .background_color(Color::WHITE)
+//!     }))
+//!     .media("(min-width: 800px)", |m| {
+//!         m.rule(|s| s.selector(".btn").block(|r| {
+//!             r.font_size(Length::px(18))
+//!         }))
+//!     });
+//!
+//! let css = sheet.render();
+//! ```
+//!
+//! # Architecture
+//!
+//! - [`StyleSheet`] — top-level container for rules and at-rules.
+//! - [`Rule`] — a selector list + declarations + (optional) nested
+//!   rules. CSS nesting via `&` is supported natively.
+//! - [`AtRule`] — every standard at-rule (`@media`, `@supports`,
+//!   `@container`, `@scope`, `@layer`, `@keyframes`, `@font-face`,
+//!   `@page`, `@import`, `@charset`, `@namespace`).
+//! - [`Declaration`] — `name: value;` (with optional `!important`).
+//! - [`Selector`] — type / class / id / attribute / pseudo / compound
+//!   / combinators.
+//! - [`Value`] — the property-value AST; all entries are typed.
+//! - Typed values in [`values`]: `Color`, `Length`, `Percentage`,
+//!   `Time`, `Angle`, `Number`, `Integer`, `CssString`, `Url`,
+//!   `Ident`, `CustomProperty`, `EasingFunction`, `Frequency`,
+//!   `Resolution`.
+//!
+//! # Color conversions
+//!
+//! `Color` carries [`ColorKind`]. Every `Color` can be converted to
+//! any of `sRGB`, `HSL`, `OKLab`, `OKLCH`, or hex via `into_rgb`,
+//! `into_hsl`, `into_oklab`, `into_oklch`, `into_hex`. All
+//! conversions are `Result`-wrapped; out-of-gamut values are reduced
+//! via binary-search chroma reduction in OKLCH. See
+//! [`ConversionError`].
+//!
+//! Conversions are pure functions with no internal caching. For
+//! workloads that convert the same set of colors repeatedly, compute
+//! once at the right boundary or wrap calls in your own `HashMap`.
+
+use crate::css::at_rules::RuleOrAtRule;
+use crate::renderable::Renderable;
+
+pub(crate) mod values;
+
+/// A collection of CSS rules and at-rules.
+///
+/// See the [module-level documentation](self) for an overview of how
+/// to build and render stylesheets.
+pub struct StyleSheet {
+    items: Vec<crate::css::at_rules::RuleOrAtRule>,
+}
+
+/// Builder for a [`StyleSheet`].
+///
+/// Constructed via [`StyleSheet::new`]. Chain `.rule(...)` /
+/// `.at_rule(...)` calls to populate, then `.build()` to seal.
+pub struct StyleSheetBuilder {
+    items: Vec<crate::css::at_rules::RuleOrAtRule>,
+}
+
+impl StyleSheet {
+    /// Construct an empty stylesheet builder.
+    pub fn new() -> StyleSheetBuilder {
+        StyleSheetBuilder { items: Vec::new() }
+    }
+}
+
+impl StyleSheetBuilder {
+    /// Add a CSS rule via a builder closure.
+    pub fn rule(mut self, f: impl FnOnce(crate::css::rule::RuleBuilder) -> crate::css::rule::RuleBuilder) -> Self {
+        let rule = f(crate::css::rule::RuleBuilder::new()).build();
+        self.items.push(RuleOrAtRule::Rule(rule));
+        self
+    }
+
+    /// Add a pre-built at-rule.
+    pub fn at_rule(mut self, at_rule: crate::css::at_rules::AtRule) -> Self {
+        self.items.push(RuleOrAtRule::AtRule(at_rule));
+        self
+    }
+
+    /// Build a `StyleSheet` from the current state.
+    pub fn build(self) -> StyleSheet {
+        StyleSheet { items: self.items }
+    }
+}
+
+impl Renderable for StyleSheet {
+    fn render(&self) -> String {
+        crate::css::render::render_sheet(self)
+    }
+}
+
+impl From<StyleSheet> for crate::node::Node {
+    fn from(sheet: StyleSheet) -> Self {
+        crate::node::Node::Raw(std::borrow::Cow::Owned(sheet.render()))
+    }
+}
+
+pub use crate::css::at_rules::AtRule;
+pub use crate::css::selector::Selector;
+pub use declaration::Declaration;
+pub use properties::Value;
+
+pub mod at_rules;
+pub(crate) mod declaration;
+pub(crate) mod properties;
+pub mod render;
+pub mod rule;
+pub mod selector;

@@ -93,3 +93,19 @@ pub mod html;
 
 #[cfg(feature = "svg")]
 pub mod svg;
+
+/// Type-safe CSS authoring: [`StyleSheet`], [`Rule`], [`AtRule`],
+/// selectors, declarations, value types, the CSS Color 4 parser, and
+/// the pretty-printer.
+///
+/// Opt-in via the `css` Cargo feature. Independent of `html`, `svg`,
+/// `components`, and `ir`.
+///
+/// See the [module documentation](self) for an overview.
+#[cfg(feature = "css")]
+pub mod css;
+
+#[cfg(all(test, feature = "css"))]
+mod css_tests {
+    include!("css/tests.rs");
+}

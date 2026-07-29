@@ -21,8 +21,12 @@ ir = ["components"]
 html = []
 # SVG element factories for the 67 SVG 2 elements (independent of `html`).
 svg = []
+# Type-safe CSS authoring: `StyleSheet`, `Rule`, `AtRule`, selectors,
+# declarations, value types, color parser, color conversions, and the
+# pretty-printer. Independent of `html` / `svg` / `components` / `ir`.
+css = []
 
 [dependencies]
 
 [package.metadata.docs.rs]
-features = ["html", "svg", "ir"]
+features = ["html", "svg", "ir", "css"]
