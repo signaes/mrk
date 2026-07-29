@@ -27,6 +27,18 @@
 //! SVG attributes use underscores (`view_box` → `viewBox`,
 //! `preserve_aspect_ratio` → `preserveAspectRatio`).
 //!
+//! ## Declarative macro
+//!
+//! The [`svg!`](crate::svg) macro builds the same trees with a
+//! markup-like syntax (attribute names are written verbatim):
+//!
+//! ```
+//! use mrk::*;
+//!
+//! let icon = svg! { svg(viewBox="0 0 10 10") { circle(cx="5" cy="5" r="4") } };
+//! assert_eq!(icon.render(), r#"<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"></circle></svg>"#);
+//! ```
+//!
 //! [`Renderable`]: crate::renderable::Renderable
 
 mod elements;

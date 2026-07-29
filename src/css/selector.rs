@@ -2,10 +2,9 @@
 //!
 //! Selectors are the building blocks of CSS rule matching. The AST
 //! in this module is deliberately minimal — just enough structure
-//! to round-trip a selector to its CSS source form. The fluent
-//! `selector()` builder lives in [`selector_builder`].
-//!
-//! [`selector_builder`]: crate::css::selector_builder::selector
+//! to round-trip a selector to its CSS source form. The free
+//! [`selector()`] function builds a [`Selector`] from any arbitrary
+//! selector string (rendered verbatim via [`Selector::Raw`]).
 
 use std::borrow::Cow;
 
@@ -47,6 +46,10 @@ pub enum Selector {
     GeneralSibling(Box<Selector>, Box<Selector>),
     /// The nesting reference `&` for CSS nesting.
     NestingRef,
+    /// A raw selector string, rendered verbatim. Escape hatch for
+    /// selectors the AST (or the `css!` token grammar) cannot
+    /// express, e.g. compound class chains like `.btn.primary`.
+    Raw(Cow<'static, str>),
 }
 
 /// Comparison operator in an attribute selector.
@@ -159,6 +162,27 @@ impl Selector {
     pub fn nesting_ref() -> Self {
         Selector::NestingRef
     }
+
+    /// Convenience constructor for [`Selector::Raw`].
+    pub fn raw(s: impl Into<Cow<'static, str>>) -> Self {
+        Selector::Raw(s.into())
+    }
+}
+
+/// Build a [`Selector`] from an arbitrary selector string.
+///
+/// The string is stored as [`Selector::Raw`] and rendered verbatim,
+/// so any selector the typed AST cannot express (compound class
+/// chains, attribute selectors, functional pseudo-classes with
+/// complex arguments, …) can still be used:
+///
+/// ```
+/// use mrk::css::selector::selector;
+///
+/// assert_eq!(selector(".btn.primary:hover").to_string(), ".btn.primary:hover");
+/// ```
+pub fn selector(s: impl Into<Cow<'static, str>>) -> Selector {
+    Selector::Raw(s.into())
 }
 
 impl std::fmt::Display for Selector {
@@ -202,6 +226,7 @@ impl std::fmt::Display for Selector {
             Selector::Sibling(a, b) => write!(f, "{} + {}", a, b),
             Selector::GeneralSibling(a, b) => write!(f, "{} ~ {}", a, b),
             Selector::NestingRef => f.write_str("&"),
+            Selector::Raw(s) => f.write_str(s),
         }
     }
 }
@@ -410,6 +435,22 @@ mod tests {
     #[test]
     fn nesting_ref_constructor() {
         assert_eq!(Selector::nesting_ref().to_string(), "&");
+    }
+
+    #[test]
+    fn display_raw() {
+        let s = Selector::Raw(Cow::Borrowed(".btn.primary:hover"));
+        assert_eq!(s.to_string(), ".btn.primary:hover");
+    }
+
+    #[test]
+    fn raw_constructor() {
+        assert_eq!(Selector::raw(".a.b").to_string(), ".a.b");
+    }
+
+    #[test]
+    fn selector_fn() {
+        assert_eq!(selector("[data-x=\"foo\" i]").to_string(), "[data-x=\"foo\" i]");
     }
 
     #[test]

@@ -77,6 +77,11 @@ macro_rules! __builder_methods {
         pub fn attr(self, name: &'static str, value: &'static str) -> Self {
             Self(self.0.push_attr(crate::attributes::attr(name).value(value)))
         }
+        /// Add a boolean attribute (no value), e.g. `disabled`, `checked`,
+        /// `readonly`. Renders as just the key (`<input disabled>`).
+        pub fn bool_attr(self, name: &'static str) -> Self {
+            Self(self.0.push_attr(crate::attributes::attr(name)))
+        }
         /// Add a `data-*` attribute.
         pub fn data_attr(self, key: &'static str, value: &'static str) -> Self {
             let name = std::borrow::Cow::Owned(format!("data-{}", key));

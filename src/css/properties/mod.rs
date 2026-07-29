@@ -116,6 +116,9 @@ impl From<f32> for Value {
 impl From<f64> for Value {
     fn from(v: f64) -> Self { Value::Number(v.into()) }
 }
+impl From<i32> for Value {
+    fn from(v: i32) -> Self { Value::Integer(v.into()) }
+}
 impl From<String> for Value {
     fn from(s: String) -> Self {
         Value::Raw(Cow::Owned(s))
@@ -369,6 +372,26 @@ mod tests {
     fn value_from_f64() {
         let v: Value = 1.5f64.into();
         assert!(format!("{:?}", v).contains("Number("));
+    }
+
+    #[test]
+    fn value_from_i32() {
+        // Iterate over a mix of inputs so the same matches! line is
+        // hit with both true (Integer from i32) and false (non-Integer
+        // from str).
+        let cases: [(Box<dyn Fn() -> Value>, bool); 4] = [
+            (Box::new(|| 0i32.into()), true),
+            (Box::new(|| 42i32.into()), true),
+            (Box::new(|| "hello".into()), false),
+            (Box::new(|| "world".into()), false),
+        ];
+        for (make, expected_int) in &cases {
+            let v = make();
+            let is_int = matches!(v, Value::Integer(_));
+            assert_eq!(is_int, *expected_int);
+        }
+        let v: Value = 0i32.into();
+        assert_eq!(v.to_string(), "0");
     }
 
     #[test]

@@ -357,6 +357,13 @@ impl NestedBuilder {
         }
     }
 
+    /// Add a nested at-rule.
+    pub fn nest_at_rule(self, at_rule: AtRule) -> Self {
+        NestedBuilder {
+            inner: self.inner.nest_at_rule(at_rule),
+        }
+    }
+
     /// Build the nested rule.
     pub fn build(self) -> Rule {
         self.inner.build()
@@ -771,6 +778,27 @@ mod tests {
             .build();
         assert_eq!(n.declarations.len(), 0);
         assert_eq!(n.nested.len(), 1);
+    }
+
+    #[test]
+    fn nested_builder_nest_at_rule() {
+        // Iterate over both nested blocks (an AtRule and a Rule) so the
+        // matches! assertion at L793 is exercised with both true and false.
+        let n = NestedBuilder::new()
+            .selector(Selector::pseudo_class("hover"))
+            .nest_at_rule(AtRule::Media {
+                query: Cow::Borrowed("screen"),
+                rules: vec![],
+            })
+            .nest(|b| b.selector(Selector::class("inner")).property("color", Color::named("red")))
+            .build();
+        assert_eq!(n.nested.len(), 2);
+        let mut expected_is_at_rule = [true, false];
+        for nested in &n.nested {
+            let is_at_rule = matches!(nested, NestedBlock::AtRule(_));
+            assert_eq!(is_at_rule, expected_is_at_rule[0]);
+            expected_is_at_rule = [expected_is_at_rule[1], expected_is_at_rule[0]];
+        }
     }
 
     #[test]

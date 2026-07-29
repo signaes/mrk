@@ -18,6 +18,18 @@
 //!     .children(nodes!["Hello"])
 //!     .render();
 //! ```
+//!
+//! ## Declarative macro
+//!
+//! The [`html!`](crate::html) macro builds the same trees with a
+//! markup-like syntax:
+//!
+//! ```
+//! use mrk::*;
+//!
+//! let tree = html! { div(class="container") { span() { "Hello" } } };
+//! assert_eq!(tree.render(), r#"<div class="container"><span>Hello</span></div>"#);
+//! ```
 
 mod elements;
 mod raw;

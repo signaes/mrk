@@ -21,8 +21,8 @@
 //! | Feature       | Pulls in                                         |
 //! |---------------|--------------------------------------------------|
 //! | *(default)*   | data model: `el`, `attr`, `Node`, `Element`     |
-//! | `html`        | 114 HTML tag factories, void elements, escaping |
-//! | `svg`         | 67 SVG 2 tag factories, presentation attrs      |
+//! | `html`        | 114 HTML tag factories, `html!` macro, void elements, escaping |
+//! | `svg`         | 67 SVG 2 tag factories, `svg!` macro, presentation attrs      |
 //! | `components`  | [`Component`] + [`Expr`] trees, [`Props`]        |
 //! | `ir`          | `[`.mrk`][crate::ir] wire format codec (depends on `components`) |
 
