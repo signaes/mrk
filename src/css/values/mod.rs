@@ -45,6 +45,6 @@ pub use easing::EasingFunction;
 mod color;
 #[allow(unused_imports)]
 pub use color::{
-    Color, ColorKind, ColorMix, ColorMixMethod, ColorMixSpace, ConversionError, ColorParseError,
-    ColorSpace,
+    named_color_srgb, Color, ColorKind, ColorMix, ColorMixMethod, ColorMixSpace,
+    ConversionError, ColorParseError, ColorSpace,
 };

@@ -40,6 +40,31 @@
 //! let css = sheet.render();
 //! ```
 //!
+//! The [`css!`](crate::css!) macro compiles CSS-like syntax into the
+//! same [`StyleSheet`] structure, with typed value parsing, nesting,
+//! and every at-rule:
+//!
+//! ```
+//! use mrk::{css, Renderable};
+//!
+//! let sheet = css! {
+//!     :root { --brand: rebeccapurple; }
+//!     .btn {
+//!         color: var(--brand);
+//!         padding: 8px 16px;
+//!         &:hover { color: blue; }
+//!     }
+//!     @media (min-width: 800px) {
+//!         .btn { padding: 16px 32px; }
+//!     }
+//! };
+//!
+//! let css = sheet.render();
+//! assert!(css.contains("--brand: rgb(102, 51, 153);"));
+//! assert!(css.contains("padding: 8px 16px;"));
+//! assert!(css.contains("@media (min-width: 800px)"));
+//! ```
+//!
 //! # Architecture
 //!
 //! - [`StyleSheet`] — top-level container for rules and at-rules.
@@ -96,6 +121,14 @@ impl StyleSheet {
     pub fn new() -> StyleSheetBuilder {
         StyleSheetBuilder { items: Vec::new() }
     }
+
+    /// Construct a stylesheet directly from its items.
+    ///
+    /// Used by the runtime parser behind the [`css!`](crate::css!)
+    /// macro.
+    pub(crate) fn from_items(items: Vec<crate::css::at_rules::RuleOrAtRule>) -> StyleSheet {
+        StyleSheet { items }
+    }
 }
 
 impl StyleSheetBuilder {
@@ -137,6 +170,9 @@ pub use properties::Value;
 
 pub mod at_rules;
 pub(crate) mod declaration;
+pub(crate) mod macros;
+#[doc(hidden)]
+pub mod parse;
 pub(crate) mod properties;
 pub mod render;
 pub mod rule;

@@ -760,6 +760,16 @@ fn gamut_map_srgb(r: f32, g: f32, b: f32, max_iters: u32) -> (f32, f32, f32) {
 // ── Named color lookup ────────────────────────────────────────────
 
 fn named_to_srgb(name: &str) -> Option<(u8, u8, u8)> {
+    named_to_srgb_inner(name)
+}
+
+/// Look up a CSS Color 4 named color. Returns the sRGB triple if
+/// `name` is one of the 148 standard CSS named colors.
+pub fn named_color_srgb(name: &str) -> Option<(u8, u8, u8)> {
+    named_to_srgb_inner(name)
+}
+
+fn named_to_srgb_inner(name: &str) -> Option<(u8, u8, u8)> {
     // CSS Color 4 named colors (148 entries).
     match name.to_lowercase().as_str() {
         "aliceblue" => Some((240, 248, 255)),

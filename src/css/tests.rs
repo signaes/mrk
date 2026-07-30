@@ -278,3 +278,237 @@ fn nested_blocks_preserve_declarations() {
     assert!(css.contains("& .child"));
     assert!(css.contains("color: gray;"));
 }
+
+// ── `css!` macro integration tests (v2) ────────────────────────────────
+
+#[test]
+fn css_macro_basic_rule() {
+    let sheet = crate::css! {
+        .btn { color: red; }
+    };
+    let css = sheet.render();
+    assert!(css.contains(".btn"));
+    // Named colors are typed and render canonically.
+    assert!(css.contains("color: rgb(255, 0, 0)"));
+}
+
+#[test]
+fn css_macro_typed_value_length() {
+    let sheet = crate::css! {
+        .box { width: 8px; }
+    };
+    let css = sheet.render();
+    assert!(css.contains("width: 8px"));
+}
+
+#[test]
+fn css_macro_typed_value_hex_color() {
+    let sheet = crate::css! {
+        .hi { color: #fff; }
+    };
+    let css = sheet.render();
+    assert!(css.contains("color: rgb(255, 255, 255)"));
+}
+
+#[test]
+fn css_macro_typed_value_rgb() {
+    let sheet = crate::css! {
+        .hi { color: rgb(255, 0, 0); }
+    };
+    let css = sheet.render();
+    assert!(css.contains("color: rgb(255, 0, 0)"));
+}
+
+#[test]
+fn css_macro_typed_value_named_color() {
+    let sheet = crate::css! {
+        .hi { color: rebeccapurple; }
+    };
+    let css = sheet.render();
+    assert!(css.contains("color: rgb(102, 51, 153)"));
+}
+
+#[test]
+fn css_macro_value_list() {
+    let sheet = crate::css! {
+        .m { margin: 8px 16px; }
+    };
+    let css = sheet.render();
+    assert!(css.contains("margin: 8px 16px"));
+}
+
+#[test]
+fn css_macro_important() {
+    let sheet = crate::css! {
+        .btn { color: red !important; }
+    };
+    let css = sheet.render();
+    assert!(css.contains("color: rgb(255, 0, 0) !important;"));
+}
+
+#[test]
+fn css_macro_url() {
+    // `url(...)` is typed via the macro for general declarations.
+    let sheet = crate::css! {
+        .bg { background: url("img.png"); }
+    };
+    let css = sheet.render();
+    assert!(css.contains("url("));
+}
+
+#[test]
+fn css_macro_var_reference() {
+    let sheet = crate::css! {
+        .a { color: var(--brand); }
+    };
+    let css = sheet.render();
+    assert!(css.contains("var(--brand)"));
+}
+
+#[test]
+fn css_macro_nested_with_typed_value() {
+    let sheet = crate::css! {
+        .card {
+            padding: 16px;
+            & .text { font-weight: bold; }
+        }
+    };
+    let css = sheet.render();
+    assert!(css.contains("padding: 16px"));
+    assert!(css.contains("& .text"));
+    assert!(css.contains("font-weight: bold"));
+}
+
+#[test]
+fn css_macro_at_media_with_typed_value() {
+    let sheet = crate::css! {
+        @media (max-width: 600px) {
+            .btn { padding: 8px; }
+        }
+    };
+    let css = sheet.render();
+    assert!(css.contains("@media"));
+    assert!(css.contains("padding: 8px"));
+}
+
+#[test]
+fn css_macro_quoted_value_passthrough() {
+    let sheet = crate::css! {
+        .m { background: "linear-gradient(red, blue)"; }
+    };
+    let css = sheet.render();
+    assert!(css.contains("linear-gradient(red, blue)"));
+}
+
+#[test]
+fn css_macro_glued_units() {
+    // Glued number+unit tokens reach the macro intact (no lexer
+    // error) and are typed via the runtime value parser.
+    let sheet = crate::css! {
+        .a { margin: 1.5rem; height: 100%; rotate: 45deg; }
+    };
+    let css = sheet.render();
+    assert!(css.contains("margin: 1.5rem"));
+    assert!(css.contains("height: 100%"));
+    assert!(css.contains("rotate: 45deg"));
+}
+
+#[test]
+fn css_macro_split_unit_single() {
+    // Units starting with `e` after a decimal (`1.5em`) fail at lex
+    // time (parsed as an exponent); the split form works.
+    let sheet = crate::css! {
+        .a { margin: 1.5 em; }
+    };
+    let css = sheet.render();
+    assert!(css.contains("margin: 1.5em"));
+}
+
+#[test]
+fn css_macro_mixed_list() {
+    let sheet = crate::css! {
+        .b { border: 1px solid red; }
+    };
+    let css = sheet.render();
+    assert!(css.contains("border: 1px solid rgb(255, 0, 0)"));
+}
+
+// ── `css!` macro integration tests: combined v2 features ────────────
+
+#[test]
+fn css_macro_keyframes_with_important() {
+    let sheet = crate::css! {
+        @keyframes fade {
+            from { opacity: 0; }
+            to { opacity: 1 !important; }
+        }
+    };
+    let css = sheet.render();
+    assert!(css.contains("@keyframes fade"));
+    assert!(css.contains("opacity: 0;"));
+    assert!(css.contains("opacity: 1 !important;"));
+}
+
+#[test]
+fn css_macro_layer_with_nested_rules() {
+    let sheet = crate::css! {
+        @layer base {
+            .btn {
+                color: blue;
+                &:hover { color: red; }
+            }
+        }
+    };
+    let css = sheet.render();
+    assert!(css.contains("@layer base {"));
+    assert!(css.contains("color: rgb(0, 0, 255);"));
+    assert!(css.contains("&:hover"));
+}
+
+#[test]
+fn css_macro_custom_property_chain() {
+    let sheet = crate::css! {
+        :root { --brand: rebeccapurple; }
+        .btn {
+            color: var(--brand);
+            background: var(--bg, blue);
+        }
+    };
+    let css = sheet.render();
+    assert!(css.contains("--brand: rgb(102, 51, 153);"));
+    assert!(css.contains("color: var(--brand);"));
+    assert!(css.contains("background: var(--bg, rgb(0, 0, 255));"));
+}
+
+#[test]
+fn css_macro_media_with_custom_properties() {
+    let sheet = crate::css! {
+        @media (prefers-color-scheme: dark) {
+            :root { --brand: white; }
+            .btn { color: var(--brand); }
+        }
+    };
+    let css = sheet.render();
+    assert!(css.contains("@media (prefers-color-scheme: dark)"));
+    assert!(css.contains("--brand: rgb(255, 255, 255);"));
+    assert!(css.contains("color: var(--brand);"));
+}
+
+#[test]
+fn css_macro_container_scope_and_font_face() {
+    let sheet = crate::css! {
+        @font-face { font-family: "My Font"; src: url("font.woff2"); }
+        @container sidebar (inline-size > 30ch) {
+            .card { padding: 16px; }
+        }
+        @scope (.card) to (.content) {
+            h1 { font-size: 1.5 rem; }
+        }
+    };
+    let css = sheet.render();
+    assert!(css.contains("@font-face"));
+    assert!(css.contains("src: url(\"font.woff2\");"));
+    assert!(css.contains("@container sidebar (inline-size > 30ch)"));
+    assert!(css.contains("@scope (.card) to (.content)"));
+    assert!(css.contains("font-size: 1.5rem;"));
+}
