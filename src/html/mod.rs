@@ -4,7 +4,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = { version = "0.8.0", features = ["html"] }
+//! mrk = { version = "0.9.0", features = ["html"] }
 //! ```
 //!
 //! ## Quick start

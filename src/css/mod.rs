@@ -12,7 +12,7 @@
 //! default):
 //!
 //! ```toml
-//! mrk = { version = "0.8.0", features = ["css"] }
+//! mrk = { version = "0.9.0", features = ["css"] }
 //! ```
 //!
 //! The module is independent of `html`, `svg`, `components`, and
