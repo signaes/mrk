@@ -32,17 +32,23 @@ macro_rules! __new_method {
 }
 pub(crate) use __new_method;
 
-/// Generates `attrs()`, `children()`, and `render()`.
+/// Generates `set_attrs()`, `append_attrs()`, `set_children()`, and
+/// `render()`.
 macro_rules! __builder_methods {
     () => {
-        /// Replace the element's attributes.
-        pub fn attrs(mut self, attrs: Vec<crate::attributes::Attribute>) -> Self {
-            self.0 = self.0.attrs(attrs);
+        /// Set the element's attributes, replacing any previously set.
+        pub fn set_attrs(mut self, attrs: Vec<crate::attributes::Attribute>) -> Self {
+            self.0 = self.0.set_attrs(attrs);
             self
         }
-        /// Replace the element's children.
-        pub fn children(mut self, children: Vec<crate::node::Node>) -> Self {
-            self.0 = self.0.children(children);
+        /// Append attributes to the element.
+        pub fn append_attrs(mut self, attrs: Vec<crate::attributes::Attribute>) -> Self {
+            self.0 = self.0.append_attrs(attrs);
+            self
+        }
+        /// Set the element's children, replacing any previously set.
+        pub fn set_children(mut self, children: Vec<crate::node::Node>) -> Self {
+            self.0 = self.0.set_children(children);
             self
         }
         /// Render to a string.
@@ -50,8 +56,9 @@ macro_rules! __builder_methods {
             use crate::renderable::Renderable;
             self.0.render()
         }
-        /// Add an arbitrary key-value attribute.
-        pub fn attr(self, name: &'static str, value: &'static str) -> Self {
+        /// Add an arbitrary key-value attribute. Accepts `&'static str`
+        /// or `String` values.
+        pub fn attr(self, name: &'static str, value: impl Into<std::borrow::Cow<'static, str>>) -> Self {
             Self(self.0.push_attr(crate::attributes::attr(name).value(value)))
         }
         /// Add a boolean attribute (no value), e.g. `disabled`, `checked`,
@@ -76,7 +83,7 @@ macro_rules! __emitted_custom_method {
             let attr_name = $attr_name_path(stringify!($method));
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr(attr_name).value(value)]),
+                    .append_attrs(vec![crate::attributes::attr(attr_name).value(value)]),
             )
         }
     };
@@ -101,13 +108,6 @@ macro_rules! __from_impls {
                 self.0.render()
             }
         }
-
-        #[cfg(feature = "components")]
-        impl $crate::components::IntoExpr for $name {
-            fn into_expr(self) -> $crate::components::Expr {
-                $crate::components::Expr::Literal(self.0)
-            }
-        }
     };
 }
 pub(crate) use __from_impls;
@@ -119,82 +119,82 @@ macro_rules! __common_globals_methods {
         pub fn id(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("id").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("id").value(value)]),
             )
         }
         /// Space-separated list of CSS class names.
         pub fn class(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("class").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("class").value(value)]),
             )
         }
         /// Inline CSS styles.
         pub fn style(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("style").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("style").value(value)]),
             )
         }
         /// Tab navigation order (global `tabindex`).
         pub fn tabindex_global(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("tabindex").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("tabindex").value(value)]),
             )
         }
         /// BCP 47 language tag (global `lang`).
         pub fn lang_global(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("lang").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("lang").value(value)]),
             )
         }
         /// Text directionality.
         pub fn dir(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("dir").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("dir").value(value)]),
             )
         }
         /// Hidden flag.
         pub fn hidden(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("hidden").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("hidden").value(value)]),
             )
         }
         /// Draggable hint.
         pub fn draggable(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("draggable").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("draggable").value(value)]),
             )
         }
         /// Spellcheck hint (global `spellcheck`).
         pub fn spellcheck_global(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("spellcheck").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("spellcheck").value(value)]),
             )
         }
         /// Advisory title (global `title`).
         pub fn title_global(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("title").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("title").value(value)]),
             )
         }
         /// Translation hint.
         pub fn translate(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("translate").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("translate").value(value)]),
             )
         }
         /// Contenteditable mode.
         pub fn contenteditable(self, value: &'static str) -> Self {
-            Self(self.0.attrs(vec![
+            Self(self.0.append_attrs(vec![
                 crate::attributes::attr("contenteditable").value(value),
             ]))
         }
@@ -202,77 +202,77 @@ macro_rules! __common_globals_methods {
         pub fn nonce_global(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("nonce").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("nonce").value(value)]),
             )
         }
         /// Shadow DOM slot name.
         pub fn slot(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("slot").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("slot").value(value)]),
             )
         }
         /// Shadow DOM `::part()` name.
         pub fn part(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("part").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("part").value(value)]),
             )
         }
         /// Virtual keyboard hint.
         pub fn inputmode(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("inputmode").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("inputmode").value(value)]),
             )
         }
         /// Enter key label hint.
         pub fn enterkeyhint(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("enterkeyhint").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("enterkeyhint").value(value)]),
             )
         }
         /// Popover API marker.
         pub fn popover(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("popover").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("popover").value(value)]),
             )
         }
-        /// Custom element slot identifier.
-        pub fn is_content(self, value: &'static str) -> Self {
+        /// Customized built-in element name (global `is`).
+        pub fn custom_element(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("is").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("is").value(value)]),
             )
         }
         /// Boolean focus-on-load flag (global `autofocus`).
         pub fn autofocus_global(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("autofocus").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("autofocus").value(value)]),
             )
         }
         /// Form association (global `form`).
         pub fn form_global(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("form").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("form").value(value)]),
             )
         }
         /// Datalist reference (global `list`).
         pub fn list_global(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("list").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("list").value(value)]),
             )
         }
         /// Autofill hint (global `autocomplete`).
         pub fn autocomplete_global(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("autocomplete").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("autocomplete").value(value)]),
             )
         }
     };
@@ -286,98 +286,98 @@ macro_rules! __event_handlers_methods {
         pub fn onclick(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onclick").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onclick").value(value)]),
             )
         }
         /// Change handler.
         pub fn onchange(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onchange").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onchange").value(value)]),
             )
         }
         /// Input handler.
         pub fn oninput(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("oninput").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("oninput").value(value)]),
             )
         }
         /// Submit handler.
         pub fn onsubmit(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onsubmit").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onsubmit").value(value)]),
             )
         }
         /// Focus handler.
         pub fn onfocus(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onfocus").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onfocus").value(value)]),
             )
         }
         /// Blur handler.
         pub fn onblur(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onblur").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onblur").value(value)]),
             )
         }
         /// Keydown handler.
         pub fn onkeydown(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onkeydown").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onkeydown").value(value)]),
             )
         }
         /// Keyup handler.
         pub fn onkeyup(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onkeyup").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onkeyup").value(value)]),
             )
         }
         /// Mousedown handler.
         pub fn onmousedown(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onmousedown").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onmousedown").value(value)]),
             )
         }
         /// Mouseup handler.
         pub fn onmouseup(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onmouseup").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onmouseup").value(value)]),
             )
         }
         /// Mouseover handler.
         pub fn onmouseover(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onmouseover").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onmouseover").value(value)]),
             )
         }
         /// Mouseout handler.
         pub fn onmouseout(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onmouseout").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onmouseout").value(value)]),
             )
         }
         /// Mousemove handler.
         pub fn onmousemove(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onmousemove").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onmousemove").value(value)]),
             )
         }
         /// Load handler.
         pub fn onload(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("onload").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("onload").value(value)]),
             )
         }
     };
@@ -391,42 +391,42 @@ macro_rules! __aria_all_methods {
         pub fn aria_label(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("aria-label").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("aria-label").value(value)]),
             )
         }
         /// Accessibility hidden state.
         pub fn aria_hidden(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("aria-hidden").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("aria-hidden").value(value)]),
             )
         }
         /// Element role hint.
         pub fn aria_role(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("role").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("role").value(value)]),
             )
         }
         /// ARIA live region politeness.
         pub fn aria_live(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("aria-live").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("aria-live").value(value)]),
             )
         }
         /// Expanded state.
         pub fn aria_expanded(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("aria-expanded").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("aria-expanded").value(value)]),
             )
         }
         /// Selected state.
         pub fn aria_selected(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("aria-selected").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("aria-selected").value(value)]),
             )
         }
     };
@@ -442,7 +442,7 @@ macro_rules! __aria_hidden_methods {
         pub fn aria_hidden(self, value: &'static str) -> Self {
             Self(
                 self.0
-                    .attrs(vec![crate::attributes::attr("aria-hidden").value(value)]),
+                    .append_attrs(vec![crate::attributes::attr("aria-hidden").value(value)]),
             )
         }
     };
@@ -743,7 +743,7 @@ pub(crate) fn attr_name(ident: &str) -> &'static str {
         "part" => "part",
         "inputmode" => "inputmode",
         "enterkeyhint" => "enterkeyhint",
-        "is_content" => "is",
+        "custom_element" => "is",
 
         // ---- Plain names used as-is ----
         "xmlns" => "xmlns",
@@ -816,9 +816,6 @@ mod tests {
     );
     super::define_svg_element!(TestSvgNoAttrs, "svg");
 
-    super::svg_factory!(test_circle, TestCircle);
-    super::svg_factory!(test_svg, TestSvgNoAttrs);
-
     #[test]
     fn svg_attr_name_viewbox_translates_to_camel_case() {
         assert_eq!(super::attr_name("view_box"), "viewBox");
@@ -858,6 +855,15 @@ mod tests {
     fn svg_element_render_with_globals() {
         let s = TestSvgNoAttrs::new().id("root").render();
         assert_eq!(s, r#"<svg id="root"></svg>"#);
+    }
+
+    #[test]
+    fn svg_set_attrs_replaces_previous_attributes() {
+        let el = TestSvgNoAttrs::new()
+            .append_attrs(vec![crate::attributes::attr("class").value("icon")])
+            .set_attrs(vec![crate::attributes::attr("id").value("root")]);
+        assert_eq!(el.0.attributes.len(), 1);
+        assert_eq!(el.0.attributes[0].key, "id");
     }
 
     #[test]
@@ -905,7 +911,7 @@ mod tests {
             .inputmode("text")
             .enterkeyhint("enter")
             .popover("auto")
-            .is_content("x")
+            .custom_element("x")
             .autofocus_global("true")
             .form_global("f")
             .data_attr("x", "d")
@@ -959,7 +965,7 @@ mod tests {
     #[test]
     fn svg_aria_all_methods_bodies_covered() {
         use crate::attributes::attr;
-        let el = TestSvgNoAttrs::new().attrs(vec![
+        let el = TestSvgNoAttrs::new().append_attrs(vec![
             attr("aria-label").value("l"),
             attr("aria-hidden").value("true"),
             attr("role").value("button"),
@@ -986,7 +992,7 @@ mod tests {
     #[test]
     fn svg_emitted_custom_method_body_covered() {
         use crate::attributes::attr;
-        let el = TestCircle::new().attrs(vec![
+        let el = TestCircle::new().append_attrs(vec![
             attr("cx").value("1"),
             attr("cy").value("2"),
             attr("r").value("3"),
@@ -1014,17 +1020,6 @@ mod tests {
         let _r = crate::renderable::Renderable::render(&s3);
     }
 
-    /// Coverage for the `IntoExpr` impl emitted by `__from_impls!`
-    /// on SVG wrappers when the `components` feature is active.
-    #[cfg(feature = "components")]
-    #[test]
-    fn svg_wrapper_into_expr() {
-        use crate::components::{Expr, IntoExpr};
-        let expr = TestSvgNoAttrs::new().into_expr();
-        let is_lit = matches!(expr, Expr::Literal(ref el) if el.name == "svg");
-        assert!(is_lit, "expected Literal(svg), got: {expr:?}");
-    }
-
     /// Exercise the `Default::default()` impl produced by
     /// `__define_struct` so its body line (`Self::new()`) is reached.
     #[test]
@@ -1038,7 +1033,7 @@ mod tests {
     #[test]
     fn svg_builder_methods_bodies_covered() {
         use crate::node::Node;
-        let s = TestSvgNoAttrs::new().children(vec![Node::Text("hi".into())]);
+        let s = TestSvgNoAttrs::new().set_children(vec![Node::Text("hi".into())]);
         assert_eq!(s.0.children.len(), 1);
     }
 
@@ -1286,7 +1281,7 @@ mod tests {
             "part",
             "inputmode",
             "enterkeyhint",
-            "is_content",
+            "custom_element",
             // Suffix variants of conflicting names.
             "tabindex_global",
             "nonce_global",

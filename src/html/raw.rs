@@ -19,7 +19,7 @@ use std::borrow::Cow;
 /// use mrk::html::{div, Raw};
 ///
 /// let html = div()
-///     .children(mrk::nodes![
+///     .set_children(mrk::nodes![
 ///         "safe content",
 ///         Raw::str("<b>bold</b>"),
 ///     ])
@@ -91,7 +91,7 @@ mod tests {
     #[test]
     fn raw_str_in_tree() {
         let html = div()
-            .children(vec!["safe".into(), Raw::str("<b>bold</b>")])
+            .set_children(vec!["safe".into(), Raw::str("<b>bold</b>")])
             .render();
         assert_eq!(html, "<div>safe<b>bold</b></div>");
     }
@@ -99,7 +99,7 @@ mod tests {
     #[test]
     fn raw_string_mixes_with_text() {
         let html = div()
-            .children(vec![
+            .set_children(vec![
                 Raw::str("<b>"),
                 Raw::string("dynamic".to_string()),
                 Raw::str("</b>"),

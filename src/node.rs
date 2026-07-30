@@ -14,11 +14,11 @@ use crate::element::Element;
 use std::borrow::Cow;
 
 /// A single child of an element.
+///
+/// This enum has three variants (`Text`, `Element`, `Raw`).
+/// Unevaluated template expressions live in the companion
+/// `mrk-components` crate, which builds on this type.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(
-    feature = "components",
-    doc = "When the `components` feature is enabled, a fourth variant [`Node::Expr`] exists."
-)]
 #[allow(unused)]
 pub enum Node {
     /// Escaped text content. Special HTML chars (`<`, `>`, `&`, `"`) are
@@ -30,15 +30,6 @@ pub enum Node {
     /// input (e.g., pre-built HTML from a markdown library). Construct via
     /// `Raw::str(...)` or `Raw::string(...)` (in the `html` module).
     Raw(Cow<'static, str>),
-    /// An unevaluated expression tree, used inside component templates.
-    ///
-    /// Typed wrappers (`Div`, `Span`, etc.) and [`Expr`](crate::Expr)
-    /// values implement [`Into<Node>`] via this variant. The render
-    /// engine resolves `Node::Expr` eagerly during
-    /// [`Component::render`](crate::Component::render), so it never
-    /// appears in the final output.
-    #[cfg(feature = "components")]
-    Expr(crate::components::Expr),
 }
 
 impl From<&'static str> for Node {
@@ -62,13 +53,6 @@ impl From<Cow<'static, str>> for Node {
 impl From<Element> for Node {
     fn from(e: Element) -> Self {
         Node::Element(e)
-    }
-}
-
-#[cfg(feature = "components")]
-impl From<crate::components::Expr> for Node {
-    fn from(e: crate::components::Expr) -> Self {
-        Node::Expr(e)
     }
 }
 
@@ -126,29 +110,33 @@ mod tests {
         let _ = format!("{:?}", n);
     }
 
-    /// `Display`-based tests for `Node`: the `Display` impl lives in
-    /// `crate::ir::display`, gated on the `ir` Cargo feature.
-    #[cfg(feature = "ir")]
+    /// `Display`-based tests for `Node`: `Display` produces the
+    /// derived `Debug` repr.
     mod display_tests {
         use super::*;
 
         #[test]
         fn to_string_text() {
             let n: Node = "hello".into();
-            assert_eq!(format!("{}", n), "hello");
+            let s = format!("{}", n);
+            assert!(s.contains("Text"));
+            assert!(s.contains("hello"));
         }
 
         #[test]
         fn to_string_raw() {
             let n = Node::Raw("<br/>".into());
-            assert_eq!(format!("{}", n), "<br/>");
+            let s = format!("{}", n);
+            assert!(s.contains("Raw"));
+            assert!(s.contains("<br/>"));
         }
 
         #[test]
         fn to_string_element() {
             let n: Node = el("div").into();
             let s = format!("{}", n);
-            assert!(s.starts_with("mrk1\n"));
+            assert!(s.contains("Element"));
+            assert!(s.contains("div"));
         }
     }
 }

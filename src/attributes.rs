@@ -9,8 +9,8 @@
 //! use mrk::*;
 //!
 //! let el = el("a")
-//!     .attrs(vec![attr("href").value("/")])
-//!     .children(nodes!["home"]);
+//!     .append_attrs(vec![attr("href").value("/")])
+//!     .set_children(nodes!["home"]);
 //! ```
 
 use std::borrow::Cow;
@@ -27,8 +27,9 @@ pub enum AttributeType {
     /// Boolean attribute — present without a value (e.g. `disabled`,
     /// `checked`, `readonly`).
     ///
-    /// Holds only the key. Renders as just the key in the IR.
-    Bool(Cow<'static, str>),
+    /// Carries no data: the key lives in [`Attribute::key`]. Renders
+    /// as just the key in the IR.
+    Bool,
 }
 
 /// A single attribute on an element: name + flavor.
@@ -55,8 +56,8 @@ impl Attribute {
     /// For a `key=value` pair, call `.value(v)` on the result.
     pub fn new(key: Cow<'static, str>) -> Self {
         Attribute {
-            key: key.clone(),
-            attr: AttributeType::Bool(key),
+            key,
+            attr: AttributeType::Bool,
         }
     }
 
@@ -77,9 +78,11 @@ impl Attribute {
 /// Begin building an attribute.
 ///
 /// Returns a boolean-flavored attribute by default; chain `.value(v)`
-/// to make it `key="value"`.
-pub fn attr(k: &'static str) -> Attribute {
-    Attribute::new(Cow::Borrowed(k))
+/// to make it `key="value"`. The key accepts anything convertible
+/// into `Cow<'static, str>` — a literal, a `String`, or a `Cow` —
+/// matching [`Element::new`](crate::Element::new).
+pub fn attr(k: impl Into<Cow<'static, str>>) -> Attribute {
+    Attribute::new(k.into())
 }
 
 #[cfg(test)]
@@ -100,9 +103,16 @@ mod tests {
     fn builder_creates_bool() {
         let a = attr("disabled");
         assert_eq!(a.key, "disabled");
+        assert_eq!(a.attr, AttributeType::Bool);
+    }
+
+    #[test]
+    fn builder_accepts_owned_key() {
+        let a = attr(String::from("data-dynamic")).value("x");
+        assert_eq!(a.key, "data-dynamic");
         assert!(matches!(
             a.attr,
-            AttributeType::Bool(Cow::Borrowed("disabled"))
+            AttributeType::KeyValue(Cow::Owned(_), Cow::Borrowed("x"))
         ));
     }
 

@@ -126,7 +126,7 @@ mod tests {
         // The last setter in a chain wins (replace semantics); so
         // we set multiple attrs through the `attrs()` API.
         use crate::attributes::attr;
-        let s = svg().attrs(vec![
+        let s = svg().append_attrs(vec![
             attr("xmlns").value("http://www.w3.org/2000/svg"),
             attr("viewBox").value("0 0 100 100"),
         ]).render();
@@ -143,7 +143,7 @@ mod tests {
     #[test]
     fn use_attrs() {
         use crate::attributes::attr;
-        let a = use_().attrs(vec![
+        let a = use_().append_attrs(vec![
             attr("href").value("#icon"),
             attr("x").value("10"),
             attr("y").value("10"),
@@ -159,7 +159,7 @@ mod tests {
     #[test]
     fn marker_attrs() {
         use crate::attributes::attr;
-        marker().attrs(vec![
+        marker().append_attrs(vec![
             attr("markerWidth").value("8"),
             attr("markerHeight").value("8"),
             attr("refX").value("4"),

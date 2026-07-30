@@ -516,7 +516,7 @@ mod tests {
     fn optgroup_attrs() {
         assert_eq!(optgroup().disabled("true").render(), r#"<optgroup disabled="true"></optgroup>"#);
         assert_eq!(optgroup().label("Group").render(), r#"<optgroup label="Group"></optgroup>"#);
-        assert_eq!(optgroup().attrs(vec![crate::attributes::attr("disabled").value("true"), crate::attributes::attr("label").value("Group")]).render(), r#"<optgroup disabled="true" label="Group"></optgroup>"#);
+        assert_eq!(optgroup().append_attrs(vec![crate::attributes::attr("disabled").value("true"), crate::attributes::attr("label").value("Group")]).render(), r#"<optgroup disabled="true" label="Group"></optgroup>"#);
     }
 
     #[test]

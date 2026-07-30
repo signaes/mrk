@@ -109,6 +109,6 @@ mod tests {
     #[test]
     fn animate_transform_with_type() {
         use crate::attributes::attr;
-        animate_transform().attrs(vec![attr("type").value("scale")]).render();
+        animate_transform().append_attrs(vec![attr("type").value("scale")]).render();
     }
 }

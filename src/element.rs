@@ -1,15 +1,15 @@
 //! The core in-memory element: tag name + attributes + children.
 //!
 //! Use [`el`] (or [`Element::new`]) to construct, then chain
-//! `.attrs(...)` and `.children(...)`. For pure-HTML trees, the
+//! `.append_attrs(...)` and `.set_children(...)`. For pure-HTML trees, the
 //! `html` feature adds 114 tag-specific factories (e.g. `div()`, `p()`).
 //!
 //! ```
 //! use mrk::*;
 //!
 //! let link = el("a")
-//!     .attrs(vec![attr("href").value("/home")])
-//!     .children(nodes!["Home"]);
+//!     .append_attrs(vec![attr("href").value("/home")])
+//!     .set_children(nodes!["Home"]);
 //! ```
 
 use crate::attributes::Attribute;
@@ -45,16 +45,41 @@ impl Element {
 
     /// Append attributes to the element.
     ///
+    /// Attributes accumulate: calling `append_attrs` twice keeps both
+    /// batches. To discard existing attributes instead, use
+    /// [`set_attrs`](Element::set_attrs).
+    ///
     /// # Example
     ///
     /// ```
     /// use mrk::*;
     ///
-    /// let e = el("a").attrs(vec![attr("href").value("/")]);
+    /// let e = el("a").append_attrs(vec![attr("href").value("/")]);
     /// assert_eq!(e.attributes.len(), 1);
     /// ```
-    pub fn attrs(mut self, attributes: Vec<Attribute>) -> Self {
+    pub fn append_attrs(mut self, attributes: Vec<Attribute>) -> Self {
         self.attributes.extend(attributes);
+        self
+    }
+
+    /// Set the element's attributes, replacing any previously set.
+    ///
+    /// Counterpart to [`append_attrs`](Element::append_attrs), which
+    /// accumulates instead.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use mrk::*;
+    ///
+    /// let e = el("a")
+    ///     .append_attrs(vec![attr("href").value("/")])
+    ///     .set_attrs(vec![attr("class").value("link")]);
+    /// assert_eq!(e.attributes.len(), 1);
+    /// assert_eq!(e.attributes[0].key, "class");
+    /// ```
+    pub fn set_attrs(mut self, attributes: Vec<Attribute>) -> Self {
+        self.attributes = attributes;
         self
     }
 
@@ -66,6 +91,10 @@ impl Element {
 
     /// Set the element's children, replacing any previously set.
     ///
+    /// Note the asymmetry with [`append_attrs`](Element::append_attrs):
+    /// children *replace*, attributes *append* — the `set_` / `append_`
+    /// prefixes mark which is which.
+    ///
     /// Use the `nodes!` macro to build the children list with mixed
     /// strings and elements:
     ///
@@ -74,10 +103,20 @@ impl Element {
     /// ```
     /// use mrk::*;
     ///
-    /// let e = el("p").children(nodes!["hi"]);
+    /// let e = el("p").set_children(nodes!["hi"]);
     /// assert_eq!(e.children.len(), 1);
     /// ```
-    pub fn children(mut self, children: Vec<Node>) -> Self {
+    ///
+    /// A plain `vec![]` works just as well — `set_children` takes any
+    /// `Vec<Node>`; `nodes!` is only shorthand for the conversions:
+    ///
+    /// ```
+    /// use mrk::*;
+    ///
+    /// let e = el("p").set_children(vec![Node::from("hi"), Node::from(el("b"))]);
+    /// assert_eq!(e.children.len(), 2);
+    /// ```
+    pub fn set_children(mut self, children: Vec<Node>) -> Self {
         self.children = children;
         self
     }
@@ -106,8 +145,8 @@ mod tests {
     #[test]
     fn builder_chains() {
         let e = el("a")
-            .attrs(vec![attr("href").value("/")])
-            .children(nodes!["Home"]);
+            .append_attrs(vec![attr("href").value("/")])
+            .set_children(nodes!["Home"]);
 
         assert_eq!(e.name, "a");
         assert_eq!(e.attributes.len(), 1);
@@ -152,9 +191,18 @@ mod tests {
     #[test]
     fn attrs_appends_multiple() {
         let e = el("div")
-            .attrs(vec![attr("class").value("a")])
-            .attrs(vec![attr("id").value("b")]);
+            .append_attrs(vec![attr("class").value("a")])
+            .append_attrs(vec![attr("id").value("b")]);
         assert_eq!(e.attributes.len(), 2);
+    }
+
+    #[test]
+    fn set_attrs_replaces_existing() {
+        let e = el("div")
+            .append_attrs(vec![attr("class").value("a")])
+            .set_attrs(vec![attr("id").value("b")]);
+        assert_eq!(e.attributes.len(), 1);
+        assert_eq!(e.attributes[0].key, "id");
     }
 
     #[test]

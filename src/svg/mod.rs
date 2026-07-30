@@ -4,7 +4,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = { version = "0.9.0", features = ["svg"] }
+//! mrk = { version = "0.10.0", features = ["svg"] }
 //! ```
 //!
 //! ## Quick start
@@ -17,7 +17,7 @@
 //! let out = svg()
 //!     .view_box("0 0 100 100")
 //!     .xmlns("http://www.w3.org/2000/svg")
-//!     .children(nodes![child])
+//!     .set_children(nodes![child])
 //!     .render();
 //! ```
 //!
@@ -29,7 +29,7 @@
 //!
 //! ## Declarative macro
 //!
-//! The [`svg!`](crate::svg) macro builds the same trees with a
+//! The [`svg!`](macro@crate::svg) macro builds the same trees with a
 //! markup-like syntax (attribute names are written verbatim):
 //!
 //! ```

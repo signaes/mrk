@@ -1,4 +1,4 @@
-/// Builds a `Vec<Node>` for use with `.children(...)`. Accepts `&'static str`,
+/// Builds a `Vec<Node>` for use with `.set_children(...)`. Accepts `&'static str`,
 /// `String`, and any element value (from `el(...)` or a factory).
 ///
 /// # Example
@@ -6,7 +6,7 @@
 /// ```
 /// use mrk::*;
 ///
-/// let tree = el("p").children(nodes!["Hello, ", "world"]);
+/// let tree = el("p").set_children(nodes!["Hello, ", "world"]);
 /// assert_eq!(tree.children.len(), 2);
 /// ```
 #[macro_export]
@@ -26,10 +26,10 @@ macro_rules! nodes {
     }};
 }
 
-/// Implementation detail of [`html!`](crate::html) and
-/// [`svg!`](crate::svg). Expands one element (tag + attributes +
+/// Implementation detail of [`html!`](macro@crate::html) and
+/// [`svg!`](macro@crate::svg). Expands one element (tag + attributes +
 /// children) into its typed wrapper from the given factory module
-/// (`$crate::html` or `$crate::svg`). Not public API.
+/// (`$crate::html` or `$crate::svg`). Not public API — it is `#[macro_export]`ed only so the expansion of the user-facing macro can reach it. Calling it directly is unsupported: its grammar and generated code may change in any release.
 ///
 /// Attribute keys may contain dashes (`data-value`, `aria-label`): each
 /// key is matched as `$key $(- $krest)*` and rebuilt into a string with
@@ -43,7 +43,7 @@ macro_rules! __mrk_markup {
         use $module as m;
         let e = m::$tag();
         let e = $crate::__mrk_markup_attrs!(e, $($attrs)*);
-        let e = e.children({
+        let e = e.set_children({
             #[allow(unused_mut)] // empty children blocks emit no pushes
             let mut v: ::std::vec::Vec<$crate::Node> = ::std::vec::Vec::new();
             $crate::__mrk_markup_children!(v, $module, $($children)*);
@@ -59,11 +59,17 @@ macro_rules! __mrk_markup {
     }};
 }
 
-/// Implementation detail of [`html!`](crate::html) and
-/// [`svg!`](crate::svg). Munches the attribute token list, building up
+/// Implementation detail of [`html!`](macro@crate::html) and
+/// [`svg!`](macro@crate::svg). Munches the attribute token list, building up
 /// the element’s attribute list. Distinguishes key-value attributes
-/// (`key = "value"`) from boolean attributes (`key` alone) using arm
-/// order: the key-value arm is tried first.
+/// (`key = "value"`, `key = { expr }`) from boolean attributes (`key`
+/// alone) using arm order: the value arms are tried first.
+///
+/// Interpolated values (`key = { expr }`) accept anything
+/// `Into<Cow<'static, str>>` (`&'static str`, `String`). Not public
+/// API — it is `#[macro_export]`ed only so the expansion of the
+/// user-facing macro can reach it. Calling it directly is unsupported:
+/// its grammar and generated code may change in any release.
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __mrk_markup_attrs {
@@ -79,6 +85,17 @@ macro_rules! __mrk_markup_attrs {
         let $e = $e.attr(key, $val);
         $crate::__mrk_markup_attrs!($e, $($rest)*)
     }};
+    ($e:ident, $key:ident = { $val:expr } $($rest:tt)*) => {{
+        let $e = $e.attr(::std::stringify!($key), $val);
+        $crate::__mrk_markup_attrs!($e, $($rest)*)
+    }};
+    ($e:ident, $key:ident $(- $krest:ident)* = { $val:expr } $($rest:tt)*) => {{
+        let key = ::std::concat!(
+            ::std::stringify!($key) $(, "-", ::std::stringify!($krest))*
+        );
+        let $e = $e.attr(key, $val);
+        $crate::__mrk_markup_attrs!($e, $($rest)*)
+    }};
     ($e:ident, $key:ident $(- $krest:ident)* $($rest:tt)*) => {{
         let key = ::std::concat!(
             ::std::stringify!($key) $(, "-", ::std::stringify!($krest))*
@@ -88,13 +105,14 @@ macro_rules! __mrk_markup_attrs {
     }};
 }
 
-/// Implementation detail of [`html!`](crate::html) and
-/// [`svg!`](crate::svg). Munches a child token list, pushing each child
-/// into the `Vec<Node>` accumulator `$v`. Not public API.
+/// Implementation detail of [`html!`](macro@crate::html) and
+/// [`svg!`](macro@crate::svg). Munches a child token list, pushing each child
+/// into the `Vec<Node>` accumulator `$v`. Not public API — it is `#[macro_export]`ed only so the expansion of the user-facing macro can reach it. Calling it directly is unsupported: its grammar and generated code may change in any release.
 ///
 /// Arm order matters: braced element children must be tried before the
-/// bare (leaf/void) element arm, which in turn precedes the text-literal
-/// arm.
+/// bare (leaf/void) element arm, which in turn precedes the `{ expr }`
+/// interpolation arm and the text-literal arm. An interpolated child is
+/// anything `Into<Node>` (`String`/`&str` become escaped text nodes).
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __mrk_markup_children {
@@ -111,6 +129,10 @@ macro_rules! __mrk_markup_children {
         ));
         $crate::__mrk_markup_children!($v, $module, $($rest)*);
     }};
+    ($v:ident, $module:path, { $e:expr } $($rest:tt)*) => {{
+        $v.push(<_ as ::std::convert::Into<$crate::Node>>::into($e));
+        $crate::__mrk_markup_children!($v, $module, $($rest)*);
+    }};
     ($v:ident, $module:path, $text:literal $($rest:tt)*) => {{
         $v.push($crate::Node::from($text));
         $crate::__mrk_markup_children!($v, $module, $($rest)*);
@@ -120,15 +142,41 @@ macro_rules! __mrk_markup_children {
 /// Builds an HTML [`Element`](crate::Element) tree with a declarative,
 /// markup-like syntax. Available with the `html` feature.
 ///
-/// Tag names resolve to the [`html`](crate::html) module's factory
+/// Tag names resolve to the [`html`](mod@crate::html) module's factory
 /// functions, so an unknown tag is a compile error. The braces may be
 /// omitted for leaf/void elements (`img(src="x.png")`, `br()`).
 /// Attribute keys may contain dashes (`data-value`, `aria-label`);
-/// values must be string literals.
+/// values must be string literals or interpolated expressions.
 ///
 /// The macro evaluates to an [`Element`](crate::Element), so the result
-/// composes with the rest of the API (`.render()`, `.attrs(...)`,
+/// composes with the rest of the API (`.render()`, `.append_attrs(...)`,
 /// [`nodes!`], ...).
+///
+/// # Interpolation
+///
+/// Rust values are spliced in with `{ expr }` groups. In *child*
+/// position the expression must implement `Into<Node>`: `String` and
+/// `&str` become **escaped** text nodes (use
+/// [`Raw`](crate::html::Raw) for trusted, unescaped HTML), elements
+/// and [`Node`](crate::Node)s are inserted as-is. In *attribute-value*
+/// position the expression must implement `Into<Cow<'static, str>>`
+/// (`&'static str`, `String`).
+///
+/// ```
+/// use mrk::*;
+///
+/// let title = String::from("Studio Shil");
+/// let page = html! { html() {
+///     head() { title() { {title} } }
+///     body(class = {"dark"}) {
+///         {el("p").set_children(nodes!["hi ", el("em").set_children(nodes!["there"])])}
+///     }
+/// } };
+/// let out = page.render();
+/// assert!(out.contains("<title>Studio Shil</title>"));
+/// assert!(out.contains(r#"<body class="dark">"#));
+/// assert!(out.contains("<p>hi <em>there</em></p>"));
+/// ```
 ///
 /// # Example
 ///
@@ -164,14 +212,30 @@ macro_rules! html {
 /// Builds an SVG [`Element`](crate::Element) tree with a declarative,
 /// markup-like syntax. Available with the `svg` feature.
 ///
-/// Tag names resolve to the [`svg`](crate::svg) module's factory
+/// Tag names resolve to the [`svg`](mod@crate::svg) module's factory
 /// functions (snake_case names such as `linear_gradient`, `font_face`),
 /// so an unknown tag is a compile error. Attribute names are written
 /// verbatim — camelCase idents like `viewBox` are valid as-is, and
 /// dashed names like `stroke-width` are supported. Values must be
-/// string literals. The braces may be omitted for leaf elements.
+/// string literals or interpolated expressions. The braces may be
+/// omitted for leaf elements.
 ///
 /// The macro evaluates to an [`Element`](crate::Element).
+///
+/// # Interpolation
+///
+/// Same rules as [`html!`](macro@crate::html): `{ expr }` in child position
+/// takes anything `Into<Node>` (`String`/`&str` become escaped text);
+/// `{ expr }` in attribute-value position takes anything
+/// `Into<Cow<'static, str>>`.
+///
+/// ```
+/// use mrk::*;
+///
+/// let w = String::from("10");
+/// let icon = svg! { rect(width = {w} height="20") };
+/// assert_eq!(icon.render(), r#"<rect width="10" height="20"></rect>"#);
+/// ```
 ///
 /// # Example
 ///
@@ -273,7 +337,7 @@ mod html_macro_tests {
         // A Raw child (built via the Element API since the html! macro
         // doesn't yet accept nodes! as a child) hits the false branch
         // of the matches! in the previous test for both Text and Element.
-        let tree = crate::el("p").children(crate::nodes![crate::html::Raw::str("x")]);
+        let tree = crate::el("p").set_children(crate::nodes![crate::html::Raw::str("x")]);
         assert_eq!(tree.children.len(), 1);
         let first_is_text = matches!(tree.children[0], Node::Text(_));
         let first_is_element = matches!(tree.children[0], Node::Element(_));
@@ -283,7 +347,7 @@ mod html_macro_tests {
 
     #[test]
     fn result_composes_with_element_api() {
-        let page = crate::el("section").children(crate::nodes![
+        let page = crate::el("section").set_children(crate::nodes![
             crate::html! { h1() { "Title" } },
             "tail",
         ]);
@@ -327,6 +391,87 @@ mod html_macro_tests {
         // Dashed boolean attributes work too, e.g. SVG `focusable`.
         let tree = crate::html! { input(focusable="false" hidden) {} };
         assert_eq!(tree.render(), r#"<input focusable="false" hidden>"#);
+    }
+
+    // ── { expr } interpolation ───────────────────────────────────
+
+    #[test]
+    fn interpolate_string_child_is_escaped() {
+        let text = String::from("a < b & c");
+        let tree = crate::html! { p() { {text} } };
+        assert_eq!(tree.render(), "<p>a &lt; b &amp; c</p>");
+    }
+
+    #[test]
+    fn interpolate_str_child() {
+        let text: &'static str = "hello";
+        let tree = crate::html! { p() { {text} } };
+        assert_eq!(tree.render(), "<p>hello</p>");
+    }
+
+    #[test]
+    fn interpolate_element_child() {
+        let inner = crate::el("strong").set_children(crate::nodes!["bold"]);
+        let tree = crate::html! { p() { "not " {inner} } };
+        assert_eq!(tree.render(), "<p>not <strong>bold</strong></p>");
+    }
+
+    #[test]
+    fn interpolate_raw_child_is_not_escaped() {
+        let tree = crate::html! { div() { {crate::html::Raw::string("<b>x</b>".to_string())} } };
+        assert_eq!(tree.render(), "<div><b>x</b></div>");
+    }
+
+    #[test]
+    fn interpolate_generic_node_child_layout() {
+        // The motivating use case: a layout function splicing an
+        // `Into<Node>` parameter into a page skeleton.
+        fn layout<T: Into<crate::Node>>(children: T) -> String {
+            crate::html! {
+                html() {
+                    head() {
+                        title() { "Studio Shil" }
+                        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+                        link(rel="stylesheet" href="/assets/css/variables.css")
+                        link(rel="stylesheet" href="/assets/css/components.css?v=2")
+                    }
+                    body() { {children} }
+                }
+            }
+            .render()
+        }
+        let out = layout(crate::el("p").set_children(crate::nodes!["hi"]));
+        assert!(out.contains("<head><title>Studio Shil</title>"));
+        assert!(out.contains(r#"<link rel="stylesheet" href="/assets/css/components.css?v=2">"#));
+        assert!(out.contains("<body><p>hi</p></body>"));
+    }
+
+    #[test]
+    fn interpolate_attr_value_str() {
+        let href: &'static str = "/home";
+        let tree = crate::html! { a(href = {href}) { "home" } };
+        assert_eq!(tree.render(), r#"<a href="/home">home</a>"#);
+    }
+
+    #[test]
+    fn interpolate_attr_value_string() {
+        let cls = String::from("btn primary");
+        let tree = crate::html! { div(class = {cls}) {} };
+        assert_eq!(tree.render(), r#"<div class="btn primary"></div>"#);
+    }
+
+    #[test]
+    fn interpolate_dashed_attr_value() {
+        let v = String::from("42");
+        let tree = crate::html! { div(data-value = {v} aria-label = {"close"}) {} };
+        assert_eq!(tree.render(), r#"<div data-value="42" aria-label="close"></div>"#);
+    }
+
+    #[test]
+    fn interpolate_attr_mixed_with_literal_and_boolean() {
+        let id = String::from("main");
+        let tree = crate::html! { input(type="text" id = {id} required) };
+        assert_eq!(tree.render(), r#"<input type="text" id="main" required>"#);
     }
 }
 
@@ -379,5 +524,36 @@ mod svg_macro_tests {
         // SVG attributes such as `noValidate` work as boolean flags.
         let tree = crate::svg! { circle(cx="5" cy="5" r="4" noValidate) };
         assert_eq!(tree.render(), r#"<circle cx="5" cy="5" r="4" noValidate></circle>"#);
+    }
+
+    #[test]
+    fn svg_interpolate_attr_value() {
+        let w = String::from("10");
+        let icon = crate::svg! { rect(width = {w} height="20") };
+        assert_eq!(icon.render(), r#"<rect width="10" height="20"></rect>"#);
+    }
+
+    #[test]
+    fn svg_interpolate_dashed_attr_value() {
+        let color: &'static str = "red";
+        let icon = crate::svg! { stop(offset="0" stop-color = {color}) };
+        assert_eq!(icon.render(), r#"<stop offset="0" stop-color="red"></stop>"#);
+    }
+
+    #[test]
+    fn svg_interpolate_text_child() {
+        let label = String::from("hi <there>");
+        let t = crate::svg! { text(x="1" y="2") { {label} } };
+        assert_eq!(t.render(), r#"<text x="1" y="2">hi &lt;there&gt;</text>"#);
+    }
+
+    #[test]
+    fn svg_interpolate_element_child() {
+        let c = crate::svg! { circle(cx="5" cy="5" r="4") };
+        let icon = crate::svg! { svg(viewBox="0 0 10 10") { {c} } };
+        assert_eq!(
+            icon.render(),
+            r#"<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"></circle></svg>"#
+        );
     }
 }

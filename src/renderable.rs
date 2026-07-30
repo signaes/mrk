@@ -2,6 +2,17 @@
 ///
 /// Implement this trait to make your own types renderable via [`render`].
 ///
+/// # Why no `Display` blanket impl
+///
+/// `Renderable` is deliberately *not* bridged to
+/// [`fmt::Display`](std::fmt::Display): doing so would make
+/// `format!("{}", el)` produce the HTML rendering instead of the
+/// derived `Debug` repr, which would silently change the meaning of
+/// `Display` for those types. Use [`render()`] (or `.render()`) when
+/// you want HTML, and `format!("{:?}", el)` for the struct repr.
+/// For the `.mrk` wire format use
+/// [`Mrk::to_string`](https://docs.rs/mrk-ir/latest/mrk_ir/struct.Mrk.html#method.to_string).
+///
 /// # Example
 ///
 /// ```
@@ -20,6 +31,23 @@
 pub trait Renderable {
     /// Returns the HTML representation of this value.
     fn render(&self) -> String;
+}
+
+/// References render through to the underlying value, so `&sheet`
+/// can be passed anywhere a [`Renderable`] is expected.
+impl<T: Renderable + ?Sized> Renderable for &T {
+    fn render(&self) -> String {
+        (**self).render()
+    }
+}
+
+/// Boxes render through to the underlying value, so
+/// `Box<dyn Renderable>` can be passed anywhere a [`Renderable`] is
+/// expected (useful for heterogeneous collections).
+impl<T: Renderable + ?Sized> Renderable for Box<T> {
+    fn render(&self) -> String {
+        (**self).render()
+    }
 }
 
 /// Renders any [`Renderable`] type to its HTML string.
@@ -58,5 +86,21 @@ mod tests {
         for (name, actual, expected) in cases {
             assert_eq!(actual, expected, "case: {name}");
         }
+    }
+
+    #[test]
+    fn references_render_through() {
+        let s = Single("hi");
+        assert_eq!(render(&s), "hi");
+        let r: &Single = &s;
+        assert_eq!(r.render(), "hi");
+    }
+
+    #[test]
+    fn boxes_render_through() {
+        let b: Box<dyn Renderable> = Box::new(Single("boxed"));
+        assert_eq!(render(b), "boxed");
+        let b = Box::new(Pair("a", "b"));
+        assert_eq!(b.render(), "a-b");
     }
 }

@@ -13,7 +13,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = "0.9.0"            # data model only
+//! mrk = "0.10.0"            # data model only
 //! ```
 //!
 //! ### Available features
@@ -23,21 +23,31 @@
 //! | *(default)*   | data model: `el`, `attr`, `Node`, `Element`     |
 //! | `html`        | 114 HTML tag factories, `html!` macro, void elements, escaping |
 //! | `svg`         | 67 SVG 2 tag factories, `svg!` macro, presentation attrs      |
-//! | `components`  | [`Component`] + [`Expr`] trees, [`Props`]        |
-//! | `ir`          | `[`.mrk`][crate::ir] wire format codec (depends on `components`) |
+//!
+//! For templated components see the
+//! [`mrk_components`](https://crates.io/crates/mrk-components) crate;
+//! for the `.mrk` wire format codec, see the
+//! [`mrk_ir`](https://crates.io/crates/mrk-ir) crate.
 
 //! Combine features freely:
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = { version = "0.9.0", features = ["html", "svg", "ir"] }
+//! mrk = { version = "0.10.0", features = ["html", "svg"] }
+//! mrk-ir = "0.1"
 //! ```
 
 #![deny(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+// The markup macros recognize structure with token-munching helper
+// macros that cost one recursion frame per token; lift the default
+// limit of 64. Downstream crates compiling very large templates may
+// need to raise their own limit.
+#![recursion_limit = "256"]
 
 mod attributes;
 mod constants;
+mod display;
 mod element;
 mod macros;
 mod node;
@@ -49,63 +59,13 @@ pub use element::{Element, el};
 pub use node::Node;
 pub use renderable::{Renderable, render};
 
-/// Templated component data model: [`Component`], [`Expr`], [`Props`],
-/// and the render engine.
-///
-/// Opt-in via the `components` Cargo feature. Pulled in by `ir`.
-///
-/// See the [module documentation](self) for an overview.
-#[cfg(feature = "components")]
-pub mod components;
-
-#[doc(inline)]
-#[cfg(feature = "components")]
-pub use components::{
-    Component, ComponentAttribute, ComponentElement, Expr, IntoExpr, MatchArm, Number, NumberKind,
-    PropType, Props, RenderError, WrappedAttribute, prop,
-};
-
-/// The `.mrk` wire format: encode/decode a [`Component`] to bytes or
-/// UTF-8 strings.
-///
-/// Opt-in via the `ir` Cargo feature (which depends on `components`).
-/// Provides [`Mrk`] (encode/decode), [`ParseError`], and
-/// [`MAX_PAYLOAD`].
-#[cfg(feature = "ir")]
-pub mod ir;
-
-#[doc(inline)]
-#[cfg(feature = "ir")]
-pub use ir::{MAX_PAYLOAD, Mrk, ParseError};
-
-#[cfg(all(test, feature = "components"))]
-mod components_tests {
-    include!("components/tests.rs");
-}
-
-#[cfg(all(test, feature = "ir"))]
-mod ir_tests {
-    include!("ir/tests.rs");
-}
-
 #[cfg(feature = "html")]
 pub mod html;
 
 #[cfg(feature = "svg")]
 pub mod svg;
 
-/// Type-safe CSS authoring: [`StyleSheet`], [`Rule`], [`AtRule`],
-/// selectors, declarations, value types, the CSS Color 4 parser, and
-/// the pretty-printer.
-///
-/// Opt-in via the `css` Cargo feature. Independent of `html`, `svg`,
-/// `components`, and `ir`.
-///
-/// See the [module documentation](self) for an overview.
-#[cfg(feature = "css")]
-pub mod css;
-
-#[cfg(all(test, feature = "css"))]
-mod css_tests {
-    include!("css/tests.rs");
-}
+// Type-safe CSS authoring moved to the standalone `mrk-css` crate
+// (https://github.com/signaes/mrk-css), and templated components to
+// `mrk-components`; both depend on `mrk` for the `Renderable` trait
+// and the `Node`/`Element` data model.

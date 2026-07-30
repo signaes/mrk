@@ -4,16 +4,34 @@ A minimal markup builder library for Rust.
 
 `mrk` provides a fluent, type-safe API for building structured markup
 trees. Compose elements with `el`, attach attributes with `attr`, and
-build children lists with the `nodes!` macro.
+build children lists with the `nodes!` macro. Layer on opt-in features
+for declarative `html!` / `svg!` markup — without external dependencies
+and with zero macros left enabled by default.
+
+`mrk` is the data-model crate in a small ecosystem:
+
+- [`mrk`](https://crates.io/crates/mrk) — data model, builder API, `html!` / `svg!` macros.
+- [`mrk-components`](https://crates.io/crates/mrk-components) — templated `Component`s.
+- [`mrk-css`](https://crates.io/crates/mrk-css) — type-safe CSS authoring (`css!` macro, `StyleSheet`).
+- [`mrk-ir`](https://crates.io/crates/mrk-ir) — binary `.mrk` wire format codec.
+
+Each companion crate depends on `mrk` for the `Renderable` trait and the
+`Node` / `Element` data model.
 
 ## Installation
 
 By default, `mrk` provides the data model and builder API only. Enable
-a feature for built-in rendering:
+features for built-in rendering and authoring:
 
 ```toml
 [dependencies]
-mrk = { version = "0.9.0", features = ["html"] }
+mrk = { version = "0.10.0", features = ["html"] }
+```
+
+Combine features freely:
+
+```toml
+mrk = { version = "0.10.0", features = ["html", "svg"] }
 ```
 
 ## Quick start (with `html` feature)
@@ -22,8 +40,8 @@ mrk = { version = "0.9.0", features = ["html"] }
 use mrk::*;
 
 let html = el("a")
-    .attrs(vec![attr("href").value("/")])
-    .children(nodes!["Home"])
+    .append_attrs(vec![attr("href").value("/")])
+    .set_children(nodes!["Home"])
     .render();
 
 assert_eq!(html, r#"<a href="/">Home</a>"#);
@@ -33,19 +51,130 @@ assert_eq!(html, r#"<a href="/">Home</a>"#);
 
 | Feature | Default | Description |
 |---|---|---|
-| `html` | no | HTML rendering, 116 tag factories, void elements, escaping |
+| *(none)*  | yes | Data model only: `el`, `attr`, `Node`, `Element`, `Renderable` |
+| `html`    | no  | 114 HTML tag factories, `html!` declarative macro, void elements, escaping |
+| `svg`     | no  | 67 SVG 2 tag factories, `svg!` declarative macro |
+
+CSS authoring moved to the standalone
+[`mrk-css`](https://github.com/signaes/mrk-css) crate (the former `css`
+feature), templated components to
+[`mrk-components`](https://github.com/signaes/mrk-components) (the
+former `components` feature), and the `.mrk` wire format codec to
+`mrk-ir` (the former `ir` feature). All depend on `mrk` for the data
+model and the `Renderable` trait.
 
 Without any feature, you can build trees but cannot render them. Implement
 `Renderable` for your own renderer, or enable a feature.
 
+## Declarative markup with `html!`
+
+With the `html` feature, the `html!` macro builds `Element` trees with
+markup-like syntax. Tag names resolve to the `html` module's factory
+functions; attribute keys may contain dashes; values must be string
+literals.
+
+```rust
+use mrk::*;
+
+let tree = html! { div(class="a b c" id="container") {
+    span(class="text") { "ok" }
+    div() { "sibling" }
+    div(data-value="true") { ul() { li() { "1" } li(class="second") { "2" } } }
+} };
+
+assert_eq!(
+    tree.render(),
+    r#"<div class="a b c" id="container"><span class="text">ok</span><div>sibling</div><div data-value="true"><ul><li>1</li><li class="second">2</li></ul></div></div>"#
+);
+```
+
+Void elements (`img`, `br`, `input`, ...) may omit the braces. Boolean
+attributes (`disabled`, `checked`, ...) are bare identifiers:
+
+```rust
+let cb = html! { input(type="checkbox" disabled) {} };
+```
+
+The macro evaluates to an `Element`, so the result composes with the
+rest of the API.
+
+## Declarative markup with `svg!`
+
+The `svg` feature mirrors `html!` for SVG: snake_case tag names
+(`linear_gradient`, `font_face`), camelCase attribute names verbatim,
+and dashed attribute keys.
+
+```rust
+use mrk::*;
+
+let icon = svg! { svg(viewBox="0 0 10 10") {
+    circle(cx="5" cy="5" r="4")
+    line(x1="0" y1="0" x2="10" y2="10" stroke-width="1")
+} };
+```
+
+## CSS authoring
+
+CSS authoring lives in the standalone
+[`mrk-css`](https://github.com/signaes/mrk-css) crate (extracted from
+what used to be the `css` feature of `mrk`). It provides `StyleSheet`,
+`Rule`, `AtRule`, typed selectors/declarations/values, the CSS Color 4
+parser and conversions, a pretty-printer, and the `css!` macro:
+
+```rust
+use mrk_css::{css, Renderable};
+
+let sheet = css! {
+    .btn {
+        color: rebeccapurple;
+        padding: 8px 16px;
+        &:hover { color: blue; }
+    }
+};
+
+let css = sheet.render();
+```
+
+A `StyleSheet` implements `mrk::Renderable` and converts into
+`mrk::Node`, so stylesheets embed directly in `mrk` markup trees.
+
+## Templated components
+
+Templated components live in the standalone
+[`mrk-components`](https://github.com/signaes/mrk-components) crate
+(extracted from what used to be the `components` feature of `mrk`).
+It provides `Component`, `Expr`, `Props`, typed HTML/SVG wrappers, and
+the `component!` / `switch!` / `text!` macros:
+
+```rust,ignore
+use mrk_components::*;
+
+component!(Card, div(class="card" id={prop("id")}) {
+    span() { {prop("title")} }
+    input(type="checkbox" disabled)
+});
+```
+
+`Component::render(&Props)` returns `Result<Vec<mrk::Node>, RenderError>`.
+See the crate's README for the full catalog.
+
+## The `.mrk` wire format
+
+The binary, length-prefixed `.mrk` codec (header `mrk1`, payloads
+capped at 64 KiB, round-trip lossless) is moving to the standalone
+`mrk-ir` crate, which will build on `mrk` and `mrk-components`.
+
 ## Building trees without rendering
+
+Without any feature, you can build `Element` trees and inspect them
+programmatically:
 
 ```rust
 use mrk::*;
 
 let tree = el("custom-tag")
-    .attrs(vec![attr("name").value("value")])
-    .children(nodes!["data"]);
+    .append_attrs(vec![attr("name").value("value")])
+    .set_children(nodes!["data"]);
 
 assert_eq!(tree.name, "custom-tag");
 ```
@@ -76,9 +205,9 @@ For common HTML tags, use the factory functions:
 ```rust
 use mrk::*;
 
-let html = div().children(nodes![
+let html = div().set_children(nodes![
     "Hello, ",
-    el("strong").children(nodes!["world"]),
+    el("strong").set_children(nodes!["world"]),
 ]).render();
 ```
 
@@ -103,3 +232,32 @@ assert_eq!(render(Greeting("world")), "<p>Hello, world!</p>");
 ## License
 
 Licensed under the [MIT License](LICENSE-MIT).
+
+## Migration from 0.9
+
+`mrk` 0.10.0 is a breaking release. The data model (`el`, `attr`,
+`Node`, `Element`, `Renderable`) and the `html!` / `svg!` macros are
+unchanged. The following capabilities were moved to dedicated crates:
+
+| 0.9 feature   | New crate                                       | Notes |
+|---------------|-------------------------------------------------|-------|
+| `components`  | [`mrk-components`](https://crates.io/crates/mrk-components) | `Component`, `Expr`, `Props`, `component!` / `switch!` / `text!` macros |
+| `css`         | [`mrk-css`](https://crates.io/crates/mrk-css)               | `StyleSheet`, `Rule`, `AtRule`, `css!` macro, CSS Color 4 |
+| `ir`          | [`mrk-ir`](https://crates.io/crates/mrk-ir)                 | `.mrk` codec (depends on `mrk-components`) |
+
+Update your `Cargo.toml`:
+
+```toml
+# Before (0.9)
+mrk = { version = "0.9", features = ["html", "svg", "components", "css", "ir"] }
+
+# After (0.10)
+mrk          = { version = "0.10", features = ["html", "svg"] }
+mrk-css        = "0.1.3"
+mrk-components = "0.0.1"
+mrk-ir         = "0.0.1"
+```
+
+Re-export paths changed: `mrk::components::*` is now
+`mrk_components::*`; `mrk::css::*` is now `mrk_css::*`;
+`mrk::ir::*` is now `mrk_ir::*`.

@@ -4,7 +4,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = { version = "0.9.0", features = ["html"] }
+//! mrk = { version = "0.10.0", features = ["html"] }
 //! ```
 //!
 //! ## Quick start
@@ -14,14 +14,14 @@
 //! use mrk::html::*;
 //!
 //! let html = div()
-//!     .attrs(vec![attr("class").value("container")])
-//!     .children(nodes!["Hello"])
+//!     .append_attrs(vec![attr("class").value("container")])
+//!     .set_children(nodes!["Hello"])
 //!     .render();
 //! ```
 //!
 //! ## Declarative macro
 //!
-//! The [`html!`](crate::html) macro builds the same trees with a
+//! The [`html!`](macro@crate::html) macro builds the same trees with a
 //! markup-like syntax:
 //!
 //! ```

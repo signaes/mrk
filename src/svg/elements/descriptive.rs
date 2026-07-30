@@ -60,7 +60,7 @@ mod tests {
             .spellcheck_global("true").title_global("t").translate("yes")
             .contenteditable("true").nonce_global("a").slot("s").part("p")
             .inputmode("text").enterkeyhint("enter").popover("auto")
-            .is_content("x").autofocus_global("true").form_global("f")
+            .custom_element("x").autofocus_global("true").form_global("f")
             .data_attr("x", "d").list_global("l").autocomplete_global("on")
             .aria_label("l").aria_hidden("t").aria_role("b").aria_live("p")
             .aria_expanded("f").aria_selected("t")

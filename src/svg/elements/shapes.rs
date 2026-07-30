@@ -79,14 +79,14 @@ mod tests {
 
     fn attr_list(pairs: &[(&'static str, &'static str)]) -> Vec<crate::attributes::Attribute> {
         use crate::attributes::attr;
-        pairs.iter().map(|(k, v)| attr(k).value(*v)).collect()
+        pairs.iter().map(|(k, v)| attr(*k).value(*v)).collect()
     }
 
     #[test]
     fn circle_attrs() {
         let el = attr_list(&[("cx", "50"), ("cy", "50"), ("r", "40")]);
         assert_eq!(
-            circle().attrs(el.clone()).render(),
+            circle().append_attrs(el.clone()).render(),
             r#"<circle cx="50" cy="50" r="40"></circle>"#
         );
     }
@@ -95,7 +95,7 @@ mod tests {
     fn ellipse_attrs() {
         let el = attr_list(&[("cx", "50"), ("cy", "50"), ("rx", "40"), ("ry", "20")]);
         assert_eq!(
-            ellipse().attrs(el.clone()).render(),
+            ellipse().append_attrs(el.clone()).render(),
             r#"<ellipse cx="50" cy="50" rx="40" ry="20"></ellipse>"#
         );
     }
@@ -104,7 +104,7 @@ mod tests {
     fn line_attrs() {
         let el = attr_list(&[("x1", "0"), ("y1", "0"), ("x2", "100"), ("y2", "100")]);
         assert_eq!(
-            line().attrs(el.clone()).render(),
+            line().append_attrs(el.clone()).render(),
             r#"<line x1="0" y1="0" x2="100" y2="100"></line>"#
         );
     }
@@ -113,7 +113,7 @@ mod tests {
     fn polyline_attrs() {
         let el = attr_list(&[("points", "0,0 50,50 100,0")]);
         assert_eq!(
-            polyline().attrs(el.clone()).render(),
+            polyline().append_attrs(el.clone()).render(),
             r#"<polyline points="0,0 50,50 100,0"></polyline>"#
         );
     }
@@ -122,7 +122,7 @@ mod tests {
     fn polygon_attrs() {
         let el = attr_list(&[("points", "0,0 100,0 50,100")]);
         assert_eq!(
-            polygon().attrs(el.clone()).render(),
+            polygon().append_attrs(el.clone()).render(),
             r#"<polygon points="0,0 100,0 50,100"></polygon>"#
         );
     }
@@ -131,7 +131,7 @@ mod tests {
     fn rect_attrs() {
         let el = attr_list(&[("x", "10"), ("y", "10"), ("width", "100"), ("height", "50"), ("rx", "5")]);
         assert_eq!(
-            rect().attrs(el.clone()).render(),
+            rect().append_attrs(el.clone()).render(),
             r#"<rect x="10" y="10" width="100" height="50" rx="5"></rect>"#
         );
     }
@@ -140,7 +140,7 @@ mod tests {
     fn path_attrs() {
         let el = attr_list(&[("d", "M 0 0 L 100 100")]);
         assert_eq!(
-            path().attrs(el.clone()).render(),
+            path().append_attrs(el.clone()).render(),
             r#"<path d="M 0 0 L 100 100"></path>"#
         );
     }

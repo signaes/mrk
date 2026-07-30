@@ -1,6 +1,6 @@
 [package]
 name = "mrk"
-version = "0.9.0"
+version = "0.10.0"
 edition = "2024"
 description = "A minimal markup builder library"
 authors = ["Thiago Oliveira <thiago@signaes.com>"]
@@ -12,21 +12,14 @@ categories = ["template-engine"]
 
 [features]
 default = []
-# Templated component data model: `Component`, `Expr`, `Props`, render impls.
-components = []
-# On-the-wire `.mrk` format: depends on `components`. Adds `Mrk` encoder/decoder,
-# `ParseError`, and `MAX_PAYLOAD`.
-ir = ["components"]
 # HTML rendering helpers (114 tag factories, void elements, escaping).
 html = []
 # SVG element factories for the 67 SVG 2 elements (independent of `html`).
 svg = []
-# Type-safe CSS authoring: `StyleSheet`, `Rule`, `AtRule`, selectors,
-# declarations, value types, color parser, color conversions, and the
-# pretty-printer. Independent of `html` / `svg` / `components` / `ir`.
-css = []
+# NOTE: the former `css`, `components`, and `ir` features moved to the
+# standalone `mrk-css`, `mrk-components`, and `mrk-ir` crates.
 
 [dependencies]
 
 [package.metadata.docs.rs]
-features = ["html", "svg", "ir", "css"]
+features = ["html", "svg"]

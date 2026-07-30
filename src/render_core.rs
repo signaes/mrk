@@ -17,10 +17,13 @@ enum Context {
     WithAttrs,
 }
 
-fn join(items: Vec<String>, separator: &'static str) -> String {
-    items.join(separator)
-}
-
+/// Per-character HTML escaping for attribute values and text nodes.
+///
+/// `with_capacity(s.len())` reserves the lower bound — the output can
+/// only grow (each `&`, `<`, `>`, `"` becomes a 4–6 char entity). The
+/// per-char `match` is intentional: it is branch-predictable, avoids a
+/// lookup table for four cases, and keeps the common no-escape path a
+/// single pass with no extra allocation.
 pub(crate) fn escape(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     s.chars().for_each(|c| match c {
@@ -35,8 +38,18 @@ pub(crate) fn escape(s: &str) -> String {
 
 impl Renderable for Element {
     fn render(&self) -> String {
-        let attributes = join(self.attributes.iter().map(|a| a.render()).collect(), " ");
-        let children = join(self.children.iter().map(|c| c.render()).collect(), "");
+        let attributes = self
+            .attributes
+            .iter()
+            .map(|a| a.render())
+            .collect::<Vec<_>>()
+            .join(" ");
+        let children = self
+            .children
+            .iter()
+            .map(|c| c.render())
+            .collect::<Vec<_>>()
+            .join("");
         let has_attrs = !attributes.is_empty();
         let is_void = VOID_HTML_ELEMENTS.contains(&self.name.as_ref());
         let context = match (is_void, has_attrs) {
@@ -64,10 +77,6 @@ impl Renderable for Node {
             Node::Text(s) => escape(s.as_ref()),
             Node::Element(e) => e.render(),
             Node::Raw(s) => s.as_ref().to_string(),
-            #[cfg(feature = "components")]
-            Node::Expr(_) => {
-                unreachable!("Node::Expr must be resolved during Component::render, not during HTML rendering")
-            }
         }
     }
 }
@@ -76,7 +85,7 @@ impl Renderable for Attribute {
     fn render(&self) -> String {
         match &self.attr {
             AttributeType::KeyValue(k, v) => format!("{}=\"{}\"", k, escape(v.as_ref())),
-            AttributeType::Bool(k) => k.to_string(),
+            AttributeType::Bool => self.key.to_string(),
         }
     }
 }
@@ -109,15 +118,15 @@ mod tests {
 
     #[test]
     fn non_void_with_text_child() {
-        let html = el("p").children(vec!["Hello".into()]).render();
+        let html = el("p").set_children(vec!["Hello".into()]).render();
         assert_eq!(html, "<p>Hello</p>");
     }
 
     #[test]
     fn non_void_with_attrs_and_children() {
         let html = el("a")
-            .attrs(vec![attr("href").value("/")])
-            .children(vec!["Home".into()])
+            .append_attrs(vec![attr("href").value("/")])
+            .set_children(vec!["Home".into()])
             .render();
         assert_eq!(html, r#"<a href="/">Home</a>"#);
     }
@@ -125,7 +134,7 @@ mod tests {
     #[test]
     fn nested_elements() {
         let html = el("div")
-            .children(vec![el("strong").children(vec!["bold".into()]).into()])
+            .set_children(vec![el("strong").set_children(vec!["bold".into()]).into()])
             .render();
         assert_eq!(html, "<div><strong>bold</strong></div>");
     }
@@ -141,19 +150,22 @@ mod tests {
         let a = attr("href").value("/");
         assert_eq!(a.render(), "href=\"/\"");
 
-        // `Display` always emits the IR. These assertions need the
-        // `ir` feature, which supplies the `Display` impl for
-        // `Element`/`Node`.
-        #[cfg(feature = "ir")]
-        {
-            assert!(format!("{}", e).starts_with("mrk1\n"));
-            assert!(format!("{}", n).starts_with("mrk1\n"));
-        }
+        // `Display` produces the derived `Debug` repr for these
+        // types — a stable struct-shape text. For HTML use
+        // `Renderable`; for `.mrk` wire text use `mrk_ir::Mrk::to_string`.
+        let ed = format!("{}", e);
+        assert!(ed.contains("Element"));
+        assert!(ed.contains("div"));
+        let nd = format!("{}", n);
+        assert!(nd.contains("Element"));
+        let ad = format!("{}", a);
+        assert!(ad.contains("Attribute"));
+        assert!(ad.contains("href"));
     }
 
     #[test]
     fn escapes_text_content() {
-        let html = el("p").children(vec!["a < b & c".into()]).render();
+        let html = el("p").set_children(vec!["a < b & c".into()]).render();
         assert_eq!(html, "<p>a &lt; b &amp; c</p>");
     }
 
@@ -190,7 +202,7 @@ mod tests {
     #[test]
     fn svg_no_void() {
         // "rect" is not in the void-elements list, so it always gets a closing tag.
-        let out = el("rect").attrs(vec![attr("width").value("100")]).render();
+        let out = el("rect").append_attrs(vec![attr("width").value("100")]).render();
         assert_eq!(out, r#"<rect width="100"></rect>"#);
     }
 
@@ -203,7 +215,7 @@ mod tests {
 
     #[test]
     fn html_void_element_with_attrs() {
-        let html = el("img").attrs(vec![attr("src").value("x.png")]).render();
+        let html = el("img").append_attrs(vec![attr("src").value("x.png")]).render();
         assert_eq!(html, "<img src=\"x.png\">");
     }
 
