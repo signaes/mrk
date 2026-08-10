@@ -2,7 +2,8 @@
 //!
 //! Methods on `Raw` produce raw-HTML [`Node`]s that are rendered as-is
 //! without escaping. Use only for trusted input (e.g., pre-built HTML
-//! from a markdown library). For untrusted input, use [`text`](crate::text).
+//! from a markdown library). For untrusted input, use a `Node::Text`
+//! (escaped by the renderer).
 
 use crate::node::Node;
 use std::borrow::Cow;

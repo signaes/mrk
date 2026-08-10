@@ -447,9 +447,8 @@ macro_rules! __aria_hidden_methods {
         }
     };
 }
-// SVG never uses `__aria_hidden_methods` (only `all` tier); the
-// `pub(crate) use` is conditionally re-exported so consumers can
-// still reference it by full path.
+// SVG never uses `__aria_hidden_methods` (only the `all` tier); the
+// `pub(crate) use` keeps it reachable by its full path.
 #[allow(unused_imports)]
 pub(crate) use __aria_hidden_methods;
 

@@ -9,33 +9,25 @@
 //! ## Features
 //!
 //! `mrk` splits capability into opt-in Cargo features. By default the
-//! crate provides only the data model (no rendering, no persistence):
+//! crate provides the data model with built-in rendering (no persistence):
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = "0.10.0"            # data model only
+//! mrk = "0.10.0"            # data model + rendering
 //! ```
 //!
 //! ### Available features
 //!
 //! | Feature       | Pulls in                                         |
 //! |---------------|--------------------------------------------------|
-//! | *(default)*   | data model: `el`, `attr`, `Node`, `Element`     |
+//! | *(default)*   | data model + rendering: `el`, `attr`, `Node`, `Element`, `Renderable` |
 //! | `html`        | 114 HTML tag factories, `html!` macro, void elements, escaping |
-//! | `svg`         | 67 SVG 2 tag factories, `svg!` macro, presentation attrs      |
+//! | `svg`         | 67 SVG 2 tag factories, `svg!` macro             |
 //!
 //! For templated components see the
 //! [`mrk_components`](https://crates.io/crates/mrk-components) crate;
 //! for the `.mrk` wire format codec, see the
 //! [`mrk_ir`](https://crates.io/crates/mrk-ir) crate.
-
-//! Combine features freely:
-//!
-//! ```toml
-//! [dependencies]
-//! mrk = { version = "0.10.0", features = ["html", "svg"] }
-//! mrk-ir = "0.1"
-//! ```
 
 #![deny(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_cfg))]

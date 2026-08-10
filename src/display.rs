@@ -3,8 +3,7 @@
 //! `Display` produces a simple struct-style repr (the same shape as
 //! the derived `Debug` output) so it stays cheap and feature-agnostic.
 //! For HTML, use [`Renderable::render`](crate::Renderable::render).
-//! For the on-the-wire `.mrk` text, use
-//! [`Mrk::to_string`](mrk_ir::Mrk::to_string).
+//! For the on-the-wire `.mrk` text, see the standalone `mrk-ir` crate.
 
 use std::fmt;
 

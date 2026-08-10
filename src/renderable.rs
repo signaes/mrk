@@ -10,8 +10,8 @@
 /// derived `Debug` repr, which would silently change the meaning of
 /// `Display` for those types. Use [`render()`] (or `.render()`) when
 /// you want HTML, and `format!("{:?}", el)` for the struct repr.
-/// For the `.mrk` wire format use
-/// [`Mrk::to_string`](https://docs.rs/mrk-ir/latest/mrk_ir/struct.Mrk.html#method.to_string).
+/// For the `.mrk` wire format, see the
+/// [`mrk-ir`](https://crates.io/crates/mrk-ir) crate.
 ///
 /// # Example
 ///

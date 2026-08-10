@@ -20,8 +20,9 @@ Each companion crate depends on `mrk` for the `Renderable` trait and the
 
 ## Installation
 
-By default, `mrk` provides the data model and builder API only. Enable
-features for built-in rendering and authoring:
+By default, `mrk` provides the data model, builder API, and built-in
+rendering. Enable features for declarative authoring (`html!` / `svg!`
+macros and typed tag factories):
 
 ```toml
 [dependencies]
@@ -34,7 +35,7 @@ Combine features freely:
 mrk = { version = "0.10.0", features = ["html", "svg"] }
 ```
 
-## Quick start (with `html` feature)
+## Quick start
 
 ```rust
 use mrk::*;
@@ -63,8 +64,10 @@ former `components` feature), and the `.mrk` wire format codec to
 `mrk-ir` (the former `ir` feature). All depend on `mrk` for the data
 model and the `Renderable` trait.
 
-Without any feature, you can build trees but cannot render them. Implement
-`Renderable` for your own renderer, or enable a feature.
+The core data model is always available: `el`, `attr`, `nodes!`,
+`Node`, `Element`, and the `Renderable` trait — with built-in HTML
+rendering for the data-model types. The `html` and `svg` features layer
+declarative macros and typed tag factories on top.
 
 ## Declarative markup with `html!`
 
@@ -161,8 +164,9 @@ See the crate's README for the full catalog.
 ## The `.mrk` wire format
 
 The binary, length-prefixed `.mrk` codec (header `mrk1`, payloads
-capped at 64 KiB, round-trip lossless) is moving to the standalone
-`mrk-ir` crate, which will build on `mrk` and `mrk-components`.
+capped at 64 KiB, round-trip lossless) lives in the standalone
+[`mrk-ir`](https://github.com/signaes/mrk-ir) crate, which builds on
+`mrk` and `mrk-components`.
 
 ## Building trees without rendering
 
@@ -185,16 +189,17 @@ All struct fields are public. You can construct directly via struct literals:
 
 ```rust
 use mrk::*;
+use std::borrow::Cow;
 
 let div = Element {
-    name: "div",
+    name: Cow::Borrowed("div"),
     attributes: vec![attr("class").value("container")],
     children: vec![],
 };
 
 let a = Attribute {
-    key: "href",
-    attr: AttributeType::KeyValue("href", "/"),
+    key: Cow::Borrowed("href"),
+    attr: AttributeType::KeyValue(Cow::Borrowed("href"), Cow::Borrowed("/")),
 };
 ```
 

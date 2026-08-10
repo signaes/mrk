@@ -28,7 +28,7 @@ pub enum AttributeType {
     /// `checked`, `readonly`).
     ///
     /// Carries no data: the key lives in [`Attribute::key`]. Renders
-    /// as just the key in the IR.
+    /// as just the key.
     Bool,
 }
 
