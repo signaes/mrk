@@ -26,13 +26,13 @@ macros and typed tag factories):
 
 ```toml
 [dependencies]
-mrk = { version = "0.10.0", features = ["html"] }
+mrk = { version = "0.10.1", features = ["html"] }
 ```
 
 Combine features freely:
 
 ```toml
-mrk = { version = "0.10.0", features = ["html", "svg"] }
+mrk = { version = "0.10.1", features = ["html", "svg"] }
 ```
 
 ## Quick start

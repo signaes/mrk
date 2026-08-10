@@ -13,7 +13,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! mrk = "0.10.0"            # data model + rendering
+//! mrk = "0.10.1"            # data model + rendering
 //! ```
 //!
 //! ### Available features
