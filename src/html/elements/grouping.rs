@@ -1,6 +1,6 @@
 //! Grouping elements (lists, paragraphs, blockquotes, etc.).
 
-use super::macros::{define_html_element, factory};
+use super::macros::{add_bool_methods, define_html_element, factory};
 
 define_html_element!(HtmlP, "p", all);
 define_html_element!(HtmlHr, "hr", all);
@@ -14,12 +14,13 @@ The WHATWG HTML Living Standard does not list this attribute on `<pre>`. It is p
     name(r#"Legacy attribute on `<pre>`. Not part of current HTML.
 
 Previously used to associate a name with the element. Use `id` instead."#),
-    autofocus(r#"Boolean attribute. When present, the element receives focus when the document or dialog is loaded.
-
-This is a global boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one element per document may autofocus."#),
     cols(r#"Legacy attribute on `<pre>`. Not part of current HTML.
 
 Previously specified the preferred column count. Use CSS `width`/`max-width` instead."#));
+add_bool_methods!(HtmlPre,
+    autofocus(r#"Boolean attribute. When present, the element receives focus when the document or dialog is loaded.
+
+This is a global boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one element per document may autofocus."#));
 define_html_element!(HtmlBlockquote, "blockquote", all, cite(r#"URL of the source being quoted or referenced.
 
 May be a citation for a journalistic-style block quote, a link to the source article, or a reference to a person whose words are quoted."#));
@@ -34,12 +35,13 @@ One of:
 - `I` (uppercase Roman numerals: `I`, `II`, `III`, ...)
 
 For new content, prefer the CSS `list-style-type` property. This attribute is supported for legacy reasons."#),
-    reversed(r#"Boolean attribute. When present, the list is rendered in descending order (the `start` value is treated as the highest number).
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
     start(r#"Starting ordinal value for the list (a valid integer; default `1`).
 
 Together with `type` and `reversed`, controls the rendered sequence."#));
+add_bool_methods!(HtmlOl,
+    reversed(r#"Boolean attribute. When present, the list is rendered in descending order (the `start` value is treated as the highest number).
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#));
 define_html_element!(HtmlUl, "ul", all);
 define_html_element!(HtmlMenu, "menu", all);
 define_html_element!(HtmlLi, "li", all,
@@ -129,8 +131,15 @@ mod tests {
         assert_eq!(pre().tabindex("0").render(), r#"<pre tabindex="0"></pre>"#);
         assert_eq!(pre().wrap("soft").render(), r#"<pre wrap="soft"></pre>"#);
         assert_eq!(pre().name("code").render(), r#"<pre name="code"></pre>"#);
-        assert_eq!(pre().autofocus("true").render(), r#"<pre autofocus="true"></pre>"#);
         assert_eq!(pre().cols("80").render(), r#"<pre cols="80"></pre>"#);
+    }
+
+    #[test]
+    fn pre_boolean_attrs_table() {
+        let cases = [("autofocus", pre().autofocus().render(), r#"<pre autofocus></pre>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
@@ -141,8 +150,15 @@ mod tests {
     #[test]
     fn ol_attrs() {
         assert_eq!(ol().type_attr("1").render(), r#"<ol type="1"></ol>"#);
-        assert_eq!(ol().reversed("true").render(), r#"<ol reversed="true"></ol>"#);
         assert_eq!(ol().start("5").render(), r#"<ol start="5"></ol>"#);
+    }
+
+    #[test]
+    fn ol_boolean_attrs_table() {
+        let cases = [("reversed", ol().reversed().render(), r#"<ol reversed></ol>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]

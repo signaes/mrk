@@ -1,6 +1,6 @@
 //! Text-level semantic elements (`<a>`, `<em>`, `<strong>`, `<span>`, etc.).
 
-use super::macros::{define_html_element, factory};
+use super::macros::{add_bool_methods, define_html_element, factory};
 
 define_html_element!(HtmlA, "a", all,
     href(r#"URL the link points to.
@@ -40,9 +40,6 @@ For use with the `hreflang` hint; user agents may use it for accessibility or re
     type_attr(r#"Hint for the MIME type of the linked resource (e.g. `text/html`, `application/pdf`).
 
 User agents may use this to skip fetching a resource that they know they cannot handle. Not a definitive statement of the resource's type."#),
-    download(r#"If present, the linked resource is downloaded instead of navigated to. The value, if provided, suggests the filename.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Same-origin URLs are required for non-empty filenames; cross-origin downloads are typically ignored by browsers."#),
     ping(r#"Space-separated list of URLs to ping with a `POST` request when the link is followed.
 
 Used for click-through tracking. Pings are sent in the background, do not block navigation, and are subject to referrer policy."#),
@@ -57,6 +54,10 @@ One of:
 - `origin-when-cross-origin`
 - `strict-origin-when-cross-origin`
 - `unsafe-url`"#));
+add_bool_methods!(HtmlA,
+    download(r#"If present, the linked resource is downloaded instead of navigated to. The value, if provided, suggests the filename.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Same-origin URLs are required for non-empty filenames; cross-origin downloads are typically ignored by browsers."#));
 define_html_element!(HtmlEm, "em", all);
 define_html_element!(HtmlStrong, "strong", all);
 define_html_element!(HtmlSmall, "small", all);
@@ -230,9 +231,16 @@ mod tests {
         assert_eq!(a().rel("noopener").render(), r#"<a rel="noopener"></a>"#);
         assert_eq!(a().hreflang("en").render(), r#"<a hreflang="en"></a>"#);
         assert_eq!(a().type_attr("text/html").render(), r#"<a type="text/html"></a>"#);
-        assert_eq!(a().download("file.txt").render(), r#"<a download="file.txt"></a>"#);
         assert_eq!(a().ping("/track").render(), r#"<a ping="/track"></a>"#);
         assert_eq!(a().referrerpolicy("no-referrer").render(), r#"<a referrerpolicy="no-referrer"></a>"#);
+    }
+
+    #[test]
+    fn a_boolean_attrs_table() {
+        let cases = [("download", a().download().render(), r#"<a download></a>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]

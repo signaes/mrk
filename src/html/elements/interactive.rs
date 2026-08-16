@@ -1,6 +1,6 @@
 //! Interactive elements (`<canvas>`, `<dialog>`, `<script>`, etc.).
 
-use super::macros::{define_html_element, factory};
+use super::macros::{add_bool_methods, define_html_element, factory};
 
 define_html_element!(HtmlCanvas, "canvas", all,
     width(r#"Rendered width in CSS pixels (a valid non-negative integer; default `300`).
@@ -9,11 +9,15 @@ Used to size the bitmap. Distinct from the CSS `width` property: the attribute s
     height(r#"Rendered height in CSS pixels (a valid non-negative integer; default `150`).
 
 Used to size the bitmap. Distinct from the CSS `height` property: the attribute sets the bitmap size, which is then scaled by CSS."#));
-define_html_element!(HtmlDetails, "details", all, open_attr(r#"Boolean attribute. When present, the child `<summary>`'s siblings are shown; when absent, they are hidden.
+define_html_element!(HtmlDetails, "details", all);
+add_bool_methods!(HtmlDetails,
+    open_attr(r#"Boolean attribute. When present, the child `<summary>`'s siblings are shown; when absent, they are hidden.
 
 This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Toggling this attribute (or user interaction with the summary) shows or hides the disclosure body."#));
 define_html_element!(HtmlSummary, "summary", all);
-define_html_element!(HtmlDialog, "dialog", all, open_attr(r#"Boolean attribute. When present, the dialog is shown and is interactive.
+define_html_element!(HtmlDialog, "dialog", all);
+add_bool_methods!(HtmlDialog,
+    open_attr(r#"Boolean attribute. When present, the dialog is shown and is interactive.
 
 This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Without this attribute, the dialog must be displayed via JavaScript (`dialog.show()`, `dialog.showModal()`) or the Popover API."#));
 define_html_element!(HtmlScript, "script", all,
@@ -30,15 +34,6 @@ Standard values:
 - `text/plain` and other MIME types: a data block (not executed)
 
 A value starting with a JavaScript MIME type essence (e.g. `text/javascript`, `application/javascript`) is treated as a JavaScript script. Authors should usually omit the attribute."#),
-    async_attr(r#"Boolean attribute. When present, the script is fetched in parallel and executed as soon as it is available, even before parsing is complete.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Not allowed for `type="module"` scripts, which always behave as if deferred."#),
-    defer_attr(r#"Boolean attribute. When present, the script is fetched in parallel and executed after the document has been parsed but before firing `DOMContentLoaded`.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Implicit for `type="module"` scripts."#),
-    nomodule(r#"Boolean attribute. When present, the script is not executed by browsers that support ES modules (i.e. browsers that understand `type="module"`).
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Used to provide a fallback classic script for legacy browsers."#),
     integrity(r#"Subresource Integrity hash (e.g. `sha384-...`).
 
 The browser refuses to execute the script if its hash does not match the resource."#),
@@ -67,6 +62,16 @@ Currently one keyword:
 - `render` (blocks rendering of any content that appears after the script in the document)
 
 The script is render-blocking only when this attribute contains `render`."#));
+add_bool_methods!(HtmlScript,
+    async_attr(r#"Boolean attribute. When present, the script is fetched in parallel and executed as soon as it is available, even before parsing is complete.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Not allowed for `type="module"` scripts, which always behave as if deferred."#),
+    defer_attr(r#"Boolean attribute. When present, the script is fetched in parallel and executed after the document has been parsed but before firing `DOMContentLoaded`.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Implicit for `type="module"` scripts."#),
+    nomodule(r#"Boolean attribute. When present, the script is not executed by browsers that support ES modules (i.e. browsers that understand `type="module"`).
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Used to provide a fallback classic script for legacy browsers."#));
 define_html_element!(HtmlNoscript, "noscript", all);
 define_html_element!(HtmlTemplate, "template", all);
 define_html_element!(HtmlSlot, "slot", all, name(r#"Name of the slot.
@@ -118,7 +123,15 @@ mod tests {
 
     #[test]
     fn details_attrs() {
-        assert_eq!(details().open_attr("true").render(), r#"<details open="true"></details>"#);
+        assert_eq!(details().render(), "<details></details>");
+    }
+
+    #[test]
+    fn details_boolean_attrs_table() {
+        let cases = [("open", details().open_attr().render(), r#"<details open></details>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
@@ -128,21 +141,38 @@ mod tests {
 
     #[test]
     fn dialog_attrs() {
-        assert_eq!(dialog().open_attr("true").render(), r#"<dialog open="true"></dialog>"#);
+        assert_eq!(dialog().render(), r#"<dialog></dialog>"#);
+    }
+
+    #[test]
+    fn dialog_boolean_attrs_table() {
+        let cases = [("open", dialog().open_attr().render(), r#"<dialog open></dialog>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
     fn script_attrs() {
         assert_eq!(script().src("app.js").render(), r#"<script src="app.js"></script>"#);
         assert_eq!(script().type_attr("module").render(), r#"<script type="module"></script>"#);
-        assert_eq!(script().async_attr("true").render(), r#"<script async="true"></script>"#);
-        assert_eq!(script().defer_attr("true").render(), r#"<script defer="true"></script>"#);
-        assert_eq!(script().nomodule("true").render(), r#"<script nomodule="true"></script>"#);
         assert_eq!(script().integrity("sha384-abc").render(), r#"<script integrity="sha384-abc"></script>"#);
         assert_eq!(script().crossorigin("anonymous").render(), r#"<script crossorigin="anonymous"></script>"#);
         assert_eq!(script().nonce("abc").render(), r#"<script nonce="abc"></script>"#);
         assert_eq!(script().referrerpolicy("no-referrer").render(), r#"<script referrerpolicy="no-referrer"></script>"#);
         assert_eq!(script().blocking("render").render(), r#"<script blocking="render"></script>"#);
+    }
+
+    #[test]
+    fn script_boolean_attrs_table() {
+        let cases = [
+            ("async", script().async_attr().render(), r#"<script async></script>"#),
+            ("defer", script().defer_attr().render(), r#"<script defer></script>"#),
+            ("nomodule", script().nomodule().render(), r#"<script nomodule></script>"#),
+        ];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]

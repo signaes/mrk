@@ -1,6 +1,6 @@
 //! Document metadata elements.
 
-use super::macros::{define_html_element, factory};
+use super::macros::{add_bool_methods, define_html_element, factory};
 
 define_html_element!(HtmlHtml, "html", no_aria);
 define_html_element!(HtmlHead, "head", no_aria);
@@ -101,9 +101,6 @@ One of:
     color(r#"Color hint for `rel="icon"` (e.g. `#fff`, `tomato`).
 
 Used by some user agents to render the UI accent alongside the icon (notably the address-bar icon on macOS Safari)."#),
-    disabled(r#"Boolean attribute. When present, the link is disabled and not fetched.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. User agents ignore disabled links when discovering resources."#),
     fetchpriority(r#"Hint for the relative fetch priority of the link.
 
 One of:
@@ -116,6 +113,10 @@ Same syntax as the `sizes` attribute on `<img>` (e.g. `(max-width: 600px) 100vw,
     imagesrcset(r#"Source set for an image used in conjunction with `imagesizes`.
 
 Same syntax as the `srcset` attribute on `<img>` (e.g. `small.webp 1x, large.webp 2x`)."#));
+add_bool_methods!(HtmlLink,
+    disabled(r#"Boolean attribute. When present, the link is disabled and not fetched.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. User agents ignore disabled links when discovering resources."#));
 define_html_element!(HtmlMeta, "meta", no_aria,
     name(r#"Metadata name (e.g. `application-name`, `author`, `description`, `generator`, `keywords`, `referrer`, `theme-color`, `color-scheme`, `viewport`).
 
@@ -219,10 +220,17 @@ mod tests {
         assert_eq!(link().referrerpolicy("no-referrer").render(), r#"<link referrerpolicy="no-referrer">"#);
         assert_eq!(link().as_attr("image").render(), r#"<link as="image">"#);
         assert_eq!(link().color("#fff").render(), r##"<link color="#fff">"##);
-        assert_eq!(link().disabled("true").render(), r#"<link disabled="true">"#);
         assert_eq!(link().fetchpriority("high").render(), r#"<link fetchpriority="high">"#);
         assert_eq!(link().imagesizes("100vw").render(), r#"<link imagesizes="100vw">"#);
         assert_eq!(link().imagesrcset("img.webp").render(), r#"<link imagesrcset="img.webp">"#);
+    }
+
+    #[test]
+    fn link_boolean_attrs_table() {
+        let cases = [("disabled", link().disabled().render(), r#"<link disabled>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]

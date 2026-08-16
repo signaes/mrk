@@ -1,6 +1,6 @@
 //! Form elements (`<form>`, `<input>`, `<button>`, `<select>`, etc.).
 
-use super::macros::{define_html_element, factory};
+use super::macros::{add_bool_methods, define_html_element, factory};
 
 define_html_element!(HtmlForm, "form", all,
     action(r#"URL to which the form will be submitted.
@@ -33,9 +33,6 @@ One of:
 One of:
 - `on` (allow autofill; default)
 - `off` (do not allow autofill)"#),
-    novalidate(r#"Boolean attribute. When present, the form is not validated before submission.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
     name(r#"Name of the form.
 
 Used to identify the form in the document; also exposed on `document.forms`."#),
@@ -45,6 +42,10 @@ Example: `UTF-8 ISO-8859-1`. UTF-8 is implied; the attribute is rarely used in p
     rel(r#"Relationship between the current document and the form's submission target.
 
 A space-separated list of link types. Currently meaningful for forms whose submission navigates to a URL (e.g. `opener`, `noopener`, `noreferrer`)."#));
+add_bool_methods!(HtmlForm,
+    novalidate(r#"Boolean attribute. When present, the form is not validated before submission.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#));
 define_html_element!(HtmlLabel, "label", all,
     for_attr(r#"ID of the form control with which the label is associated.
 
@@ -89,18 +90,6 @@ Sent as the value of the name/value pair on submission. For `<input type="checkb
     placeholder(r#"Short hint displayed inside the control when its value is empty.
 
 Not a substitute for a `<label>`. Line breaks are not rendered."#),
-    required(r#"Boolean attribute. When present, the control must have a non-empty value for the form to be submitted.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
-    disabled(r#"Boolean attribute. When present, the control is non-interactive and is not submitted with the form.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Disabled controls are excluded from the submitted data."#),
-    readonly(r#"Boolean attribute. When present, the control is not editable but is still focusable and submitted with the form.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `text`, `search`, `url`, `tel`, `email`, `password`, `date`, `month`, `week`, `time`, `datetime-local`, and `number`."#),
-    checked(r#"Boolean attribute. When present, the checkbox or radio button is initially checked.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `checkbox` and `radio`."#),
     maxlength(r#"Maximum number of characters the value may contain (a valid non-negative integer).
 
 Applies to text-entry types: `text`, `search`, `url`, `tel`, `email`, `password`, and `textarea`."#),
@@ -156,9 +145,6 @@ Standard tokens (case-insensitive) include:
 - `bday`, `bday-day`, `bday-month`, `bday-year`
 
 A section name may prefix the token (e.g. `section-blue shipping street-address`)."#),
-    autofocus(r#"Boolean attribute. When present, the control receives focus when the document or dialog is loaded.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one element per document may autofocus."#),
     form_attr(r#"ID of the `<form>` element with which the control is associated.
 
 Allows the control to be a form participant even when not nested inside the form."#),
@@ -179,9 +165,6 @@ One of:
 - `get`
 - `post`
 - `dialog` (close the containing dialog)"#),
-    formnovalidate(r#"Boolean attribute. When present, the form is not validated before submission, overriding the form's `novalidate` attribute.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `<input type="submit">` and `<input type="image">`."#),
     formtarget(r#"Browsing context for the submission response, overriding the form's `target` attribute.
 
 Applies to `<input type="submit">` and `<input type="image">`. Same values as `target`:
@@ -195,9 +178,6 @@ Applies to `<input type="submit">` and `<input type="image">`. Same values as `t
     list(r#"ID of a `<datalist>` element providing suggested values for the control.
 
 The datalist is shown as a dropdown of options when the user interacts with the control. The value is not constrained to the suggestions."#),
-    multiple(r#"Boolean attribute. When present, the control accepts more than one value.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `email`, `file`, and `select`."#),
     spellcheck(r#"Hint for the user agent's spell checking behavior.
 
 One of:
@@ -216,6 +196,28 @@ One of:
 - `toggle` (default; show the popover if hidden, hide if showing)
 - `show` (always show)
 - `hide` (always hide)"#));
+add_bool_methods!(HtmlInput,
+    required(r#"Boolean attribute. When present, the control must have a non-empty value for the form to be submitted.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    disabled(r#"Boolean attribute. When present, the control is non-interactive and is not submitted with the form.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Disabled controls are excluded from the submitted data."#),
+    readonly(r#"Boolean attribute. When present, the control is not editable but is still focusable and submitted with the form.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `text`, `search`, `url`, `tel`, `email`, `password`, `date`, `month`, `week`, `time`, `datetime-local`, and `number`."#),
+    checked(r#"Boolean attribute. When present, the checkbox or radio button is initially checked.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `checkbox` and `radio`."#),
+    autofocus(r#"Boolean attribute. When present, the control receives focus when the document or dialog is loaded.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one element per document may autofocus."#),
+    formnovalidate(r#"Boolean attribute. When present, the form is not validated before submission, overriding the form's `novalidate` attribute.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `<input type="submit">` and `<input type="image">`."#),
+    multiple(r#"Boolean attribute. When present, the control accepts more than one value.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Applies to `email`, `file`, and `select`."#));
 define_html_element!(HtmlButton, "button", all,
     type_attr(r#"Behavior of the button.
 
@@ -223,9 +225,6 @@ One of:
 - `submit` (default; submits the form)
 - `reset` (resets the form's controls to their initial values)
 - `button` (no default behavior; use with JavaScript)"#),
-    disabled(r#"Boolean attribute. When present, the button is non-interactive and cannot be activated.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Disabled buttons are not submitted with the form."#),
     form_attr(r#"ID of the `<form>` element with which the button is associated.
 
 Allows the button to submit or reset a form even when not nested inside it."#),
@@ -235,9 +234,6 @@ Only submitted if the button itself activated the submission."#),
     value(r#"Button's value, submitted with the form as part of the name/value pair when the button activates submission.
 
 Distinct from the button's text content; sent to the server instead of the text."#),
-    autofocus(r#"Boolean attribute. When present, the button receives focus when the document or dialog is loaded.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one element per document may autofocus."#),
     popovertarget(r#"ID of the popover element to toggle when the button is activated."#),
     popovertargetaction(r#"Action the popover performs when the button is activated.
 
@@ -245,8 +241,20 @@ One of:
 - `toggle` (default)
 - `show`
 - `hide`"#));
+add_bool_methods!(HtmlButton,
+    disabled(r#"Boolean attribute. When present, the button is non-interactive and cannot be activated.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Disabled buttons are not submitted with the form."#),
+    autofocus(r#"Boolean attribute. When present, the button receives focus when the document or dialog is loaded.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one element per document may autofocus."#));
 define_html_element!(HtmlSelect, "select", all,
     name(r#"Name of the control, submitted with the form as part of the name/value pair."#),
+    size(r#"Number of visible options (a valid non-negative integer; default `1` if `multiple` is absent, `4` if present).
+
+When greater than 1 the control is rendered as a list box."#),
+    form_attr(r#"ID of the `<form>` element with which the control is associated."#));
+add_bool_methods!(HtmlSelect,
     required(r#"Boolean attribute. When present, a non-disabled option must be selected for the form to be valid.
 
 This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. An empty selection is invalid."#),
@@ -256,34 +264,32 @@ This is a boolean attribute. In HTML, presence is sufficient; the value is conve
     multiple(r#"Boolean attribute. When present, more than one option may be selected.
 
 This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Browsers typically render a list box when set."#),
-    size(r#"Number of visible options (a valid non-negative integer; default `1` if `multiple` is absent, `4` if present).
-
-When greater than 1 the control is rendered as a list box."#),
     autofocus(r#"Boolean attribute. When present, the control receives focus when the document or dialog is loaded.
 
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
-    form_attr(r#"ID of the `<form>` element with which the control is associated."#));
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#));
 define_html_element!(HtmlDatalist, "datalist", no_aria);
 define_html_element!(HtmlOptgroup, "optgroup", all,
-    disabled(r#"Boolean attribute. When present, all options in the group are non-interactive and not selectable.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
     label(r#"User-visible label for the group of options.
 
 Required. Browsers render it as a non-selectable group heading."#));
-define_html_element!(HtmlOption, "option", all,
-    disabled(r#"Boolean attribute. When present, the option is non-interactive and not selectable.
+add_bool_methods!(HtmlOptgroup,
+    disabled(r#"Boolean attribute. When present, all options in the group are non-interactive and not selectable.
 
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#));
+define_html_element!(HtmlOption, "option", all,
     label(r#"User-visible label for the option.
 
 If absent, the text content of the option element is used. Used in the rendered list (rather than the value sent on submission)."#),
-    selected(r#"Boolean attribute. When present, the option is initially selected.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. In a single-select list, this deselects any previously selected option."#),
     value(r#"Value submitted with the form when this option is selected.
 
 If absent, the text content of the option element is submitted instead."#));
+add_bool_methods!(HtmlOption,
+    disabled(r#"Boolean attribute. When present, the option is non-interactive and not selectable.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    selected(r#"Boolean attribute. When present, the option is initially selected.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. In a single-select list, this deselects any previously selected option."#));
 define_html_element!(HtmlTextarea, "textarea", all,
     name(r#"Name of the control, submitted with the form as part of the name/value pair."#),
     rows(r#"Visible height in lines of text (a valid non-negative integer; default `2`).
@@ -295,23 +301,11 @@ The textarea wraps when content exceeds this width, depending on `wrap`."#),
     placeholder(r#"Short hint displayed inside the control when its value is empty.
 
 Not a substitute for a `<label>`. Line breaks are not rendered."#),
-    required(r#"Boolean attribute. When present, the value must be non-empty for the form to be valid.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
-    disabled(r#"Boolean attribute. When present, the control is non-interactive and not submitted.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
-    readonly(r#"Boolean attribute. When present, the control is not editable but is still focusable and submitted with the form.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
     maxlength(r#"Maximum number of characters the value may contain (a valid non-negative integer)."#),
     minlength(r#"Minimum number of characters required for the value to be valid (a valid non-negative integer)."#),
     autocomplete(r#"Autofill hint for the control.
 
 Same token set as the `autocomplete` attribute on `<input>`: standard tokens like `on`, `off`, `name`, `email`, `street-address`, `postal-code`, etc."#),
-    autofocus(r#"Boolean attribute. When present, the control receives focus when the document or dialog is loaded.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
     wrap(r#"Line wrapping behavior of the submitted value.
 
 One of:
@@ -324,6 +318,19 @@ One of:
 - `true` (enable spell checking)
 - `false` (disable spell checking)
 - `default` (let the user agent decide)"#));
+add_bool_methods!(HtmlTextarea,
+    required(r#"Boolean attribute. When present, the value must be non-empty for the form to be valid.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    disabled(r#"Boolean attribute. When present, the control is non-interactive and not submitted.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    readonly(r#"Boolean attribute. When present, the control is not editable but is still focusable and submitted with the form.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    autofocus(r#"Boolean attribute. When present, the control receives focus when the document or dialog is loaded.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#));
 define_html_element!(HtmlOutput, "output", all,
     for_attr(r#"Space-separated list of IDs of input elements whose values contribute to the calculation shown in the output.
 
@@ -357,13 +364,14 @@ Values at or above this number are considered high. Must be greater than `low`."
 
 Should lie within `min`..`max`. The user agent may style the gauge differently depending on whether the current value is below, within, or above the optimal range."#));
 define_html_element!(HtmlFieldset, "fieldset", all,
-    disabled(r#"Boolean attribute. When present, all form controls in the fieldset are disabled (matching the effect of setting `disabled` on each one).
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. The descendant controls are excluded from submission."#),
     form_attr(r#"ID of the `<form>` element with which the fieldset is associated."#),
     name(r#"Name of the fieldset.
 
 Submitted with the form as part of the name/value pair only if the fieldset is the form's first `<fieldset>` ancestor of an element being submitted."#));
+add_bool_methods!(HtmlFieldset,
+    disabled(r#"Boolean attribute. When present, all form controls in the fieldset are disabled (matching the effect of setting `disabled` on each one).
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. The descendant controls are excluded from submission."#));
 define_html_element!(HtmlLegend, "legend", all);
 
 factory!(
@@ -434,10 +442,17 @@ mod tests {
         assert_eq!(form().enctype("multipart/form-data").render(), r#"<form enctype="multipart/form-data"></form>"#);
         assert_eq!(form().target("_blank").render(), r#"<form target="_blank"></form>"#);
         assert_eq!(form().autocomplete("on").render(), r#"<form autocomplete="on"></form>"#);
-        assert_eq!(form().novalidate("true").render(), r#"<form novalidate="true"></form>"#);
         assert_eq!(form().name("myform").render(), r#"<form name="myform"></form>"#);
         assert_eq!(form().accept_charset("UTF-8").render(), r#"<form accept-charset="UTF-8"></form>"#);
         assert_eq!(form().rel("stylesheet").render(), r#"<form rel="stylesheet"></form>"#);
+    }
+
+    #[test]
+    fn form_boolean_attrs_table() {
+        let cases = [("novalidate", form().novalidate().render(), r#"<form novalidate></form>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
@@ -452,10 +467,6 @@ mod tests {
         assert_eq!(input().name("field").render(), r#"<input name="field">"#);
         assert_eq!(input().value("hello").render(), r#"<input value="hello">"#);
         assert_eq!(input().placeholder("Enter...").render(), r#"<input placeholder="Enter...">"#);
-        assert_eq!(input().required("true").render(), r#"<input required="true">"#);
-        assert_eq!(input().disabled("true").render(), r#"<input disabled="true">"#);
-        assert_eq!(input().readonly("true").render(), r#"<input readonly="true">"#);
-        assert_eq!(input().checked("true").render(), r#"<input checked="true">"#);
         assert_eq!(input().maxlength("100").render(), r#"<input maxlength="100">"#);
         assert_eq!(input().minlength("5").render(), r#"<input minlength="5">"#);
         assert_eq!(input().pattern("[a-z]+").render(), r#"<input pattern="[a-z]+">"#);
@@ -467,17 +478,14 @@ mod tests {
         assert_eq!(input().alt("Pic").render(), r#"<input alt="Pic">"#);
         assert_eq!(input().accept("image/*").render(), r#"<input accept="image/*">"#);
         assert_eq!(input().autocomplete("off").render(), r#"<input autocomplete="off">"#);
-        assert_eq!(input().autofocus("true").render(), r#"<input autofocus="true">"#);
         assert_eq!(input().form_attr("myform").render(), r#"<input form="myform">"#);
         assert_eq!(input().formaction("/upload").render(), r#"<input formaction="/upload">"#);
         assert_eq!(input().formenctype("multipart/form-data").render(), r#"<input formenctype="multipart/form-data">"#);
         assert_eq!(input().formmethod("post").render(), r#"<input formmethod="post">"#);
-        assert_eq!(input().formnovalidate("true").render(), r#"<input formnovalidate="true">"#);
         assert_eq!(input().formtarget("_blank").render(), r#"<input formtarget="_blank">"#);
         assert_eq!(input().height("300").render(), r#"<input height="300">"#);
         assert_eq!(input().width("200").render(), r#"<input width="200">"#);
         assert_eq!(input().list("opts").render(), r#"<input list="opts">"#);
-        assert_eq!(input().multiple("true").render(), r#"<input multiple="true">"#);
         assert_eq!(input().spellcheck("true").render(), r#"<input spellcheck="true">"#);
         assert_eq!(input().datalist("opts").render(), r#"<input datalist="opts">"#);
         assert_eq!(input().popovertarget("menu").render(), r#"<input popovertarget="menu">"#);
@@ -485,26 +493,60 @@ mod tests {
     }
 
     #[test]
+    fn input_boolean_attrs_table() {
+        let cases = [
+            ("required", input().required().render(), r#"<input required>"#),
+            ("disabled", input().disabled().render(), r#"<input disabled>"#),
+            ("readonly", input().readonly().render(), r#"<input readonly>"#),
+            ("checked", input().checked().render(), r#"<input checked>"#),
+            ("autofocus", input().autofocus().render(), r#"<input autofocus>"#),
+            ("formnovalidate", input().formnovalidate().render(), r#"<input formnovalidate>"#),
+            ("multiple", input().multiple().render(), r#"<input multiple>"#),
+        ];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
+    }
+
+    #[test]
     fn button_attrs() {
         assert_eq!(button().type_attr("submit").render(), r#"<button type="submit"></button>"#);
-        assert_eq!(button().disabled("true").render(), r#"<button disabled="true"></button>"#);
         assert_eq!(button().form_attr("myform").render(), r#"<button form="myform"></button>"#);
         assert_eq!(button().name("btn").render(), r#"<button name="btn"></button>"#);
         assert_eq!(button().value("ok").render(), r#"<button value="ok"></button>"#);
-        assert_eq!(button().autofocus("true").render(), r#"<button autofocus="true"></button>"#);
         assert_eq!(button().popovertarget("menu").render(), r#"<button popovertarget="menu"></button>"#);
         assert_eq!(button().popovertargetaction("toggle").render(), r#"<button popovertargetaction="toggle"></button>"#);
     }
 
     #[test]
+    fn button_boolean_attrs_table() {
+        let cases = [
+            ("disabled", button().disabled().render(), r#"<button disabled></button>"#),
+            ("autofocus", button().autofocus().render(), r#"<button autofocus></button>"#),
+        ];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
+    }
+
+    #[test]
     fn select_attrs() {
         assert_eq!(select().name("choice").render(), r#"<select name="choice"></select>"#);
-        assert_eq!(select().required("true").render(), r#"<select required="true"></select>"#);
-        assert_eq!(select().disabled("true").render(), r#"<select disabled="true"></select>"#);
-        assert_eq!(select().multiple("true").render(), r#"<select multiple="true"></select>"#);
         assert_eq!(select().size("5").render(), r#"<select size="5"></select>"#);
-        assert_eq!(select().autofocus("true").render(), r#"<select autofocus="true"></select>"#);
         assert_eq!(select().form_attr("myform").render(), r#"<select form="myform"></select>"#);
+    }
+
+    #[test]
+    fn select_boolean_attrs_table() {
+        let cases = [
+            ("required", select().required().render(), r#"<select required></select>"#),
+            ("disabled", select().disabled().render(), r#"<select disabled></select>"#),
+            ("multiple", select().multiple().render(), r#"<select multiple></select>"#),
+            ("autofocus", select().autofocus().render(), r#"<select autofocus></select>"#),
+        ];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
@@ -514,17 +556,33 @@ mod tests {
 
     #[test]
     fn optgroup_attrs() {
-        assert_eq!(optgroup().disabled("true").render(), r#"<optgroup disabled="true"></optgroup>"#);
         assert_eq!(optgroup().label("Group").render(), r#"<optgroup label="Group"></optgroup>"#);
         assert_eq!(optgroup().append_attrs(vec![crate::attributes::attr("disabled").value("true"), crate::attributes::attr("label").value("Group")]).render(), r#"<optgroup disabled="true" label="Group"></optgroup>"#);
     }
 
     #[test]
+    fn optgroup_boolean_attrs_table() {
+        let cases = [("disabled", optgroup().disabled().render(), r#"<optgroup disabled></optgroup>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
+    }
+
+    #[test]
     fn option_attrs() {
-        assert_eq!(option().disabled("true").render(), r#"<option disabled="true"></option>"#);
         assert_eq!(option().label("Opt").render(), r#"<option label="Opt"></option>"#);
-        assert_eq!(option().selected("true").render(), r#"<option selected="true"></option>"#);
         assert_eq!(option().value("1").render(), r#"<option value="1"></option>"#);
+    }
+
+    #[test]
+    fn option_boolean_attrs_table() {
+        let cases = [
+            ("disabled", option().disabled().render(), r#"<option disabled></option>"#),
+            ("selected", option().selected().render(), r#"<option selected></option>"#),
+        ];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
@@ -533,16 +591,25 @@ mod tests {
         assert_eq!(textarea().rows("10").render(), r#"<textarea rows="10"></textarea>"#);
         assert_eq!(textarea().cols("50").render(), r#"<textarea cols="50"></textarea>"#);
         assert_eq!(textarea().placeholder("Tell us...").render(), r#"<textarea placeholder="Tell us..."></textarea>"#);
-        assert_eq!(textarea().required("true").render(), r#"<textarea required="true"></textarea>"#);
-        assert_eq!(textarea().disabled("true").render(), r#"<textarea disabled="true"></textarea>"#);
-        assert_eq!(textarea().readonly("true").render(), r#"<textarea readonly="true"></textarea>"#);
         assert_eq!(textarea().maxlength("500").render(), r#"<textarea maxlength="500"></textarea>"#);
         assert_eq!(textarea().minlength("10").render(), r#"<textarea minlength="10"></textarea>"#);
         assert_eq!(textarea().autocomplete("off").render(), r#"<textarea autocomplete="off"></textarea>"#);
-        assert_eq!(textarea().autofocus("true").render(), r#"<textarea autofocus="true"></textarea>"#);
         assert_eq!(textarea().wrap("soft").render(), r#"<textarea wrap="soft"></textarea>"#);
         assert_eq!(textarea().form_attr("myform").render(), r#"<textarea form="myform"></textarea>"#);
         assert_eq!(textarea().spellcheck("true").render(), r#"<textarea spellcheck="true"></textarea>"#);
+    }
+
+    #[test]
+    fn textarea_boolean_attrs_table() {
+        let cases = [
+            ("required", textarea().required().render(), r#"<textarea required></textarea>"#),
+            ("disabled", textarea().disabled().render(), r#"<textarea disabled></textarea>"#),
+            ("readonly", textarea().readonly().render(), r#"<textarea readonly></textarea>"#),
+            ("autofocus", textarea().autofocus().render(), r#"<textarea autofocus></textarea>"#),
+        ];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
@@ -570,9 +637,16 @@ mod tests {
 
     #[test]
     fn fieldset_attrs() {
-        assert_eq!(fieldset().disabled("true").render(), r#"<fieldset disabled="true"></fieldset>"#);
         assert_eq!(fieldset().form_attr("myform").render(), r#"<fieldset form="myform"></fieldset>"#);
         assert_eq!(fieldset().name("group").render(), r#"<fieldset name="group"></fieldset>"#);
+    }
+
+    #[test]
+    fn fieldset_boolean_attrs_table() {
+        let cases = [("disabled", fieldset().disabled().render(), r#"<fieldset disabled></fieldset>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]

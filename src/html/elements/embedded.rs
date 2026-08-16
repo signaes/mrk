@@ -1,6 +1,6 @@
 //! Embedded content elements (`<img>`, `<video>`, `<audio>`, etc.).
 
-use super::macros::{define_html_element, factory};
+use super::macros::{add_bool_methods, define_html_element, factory};
 
 define_html_element!(HtmlPicture, "picture", aria_hidden_only);
 define_html_element!(HtmlSource, "source", no_aria,
@@ -88,7 +88,8 @@ One of:
 Required for canvas pixel access to images from foreign origins."#),
     usemap(r#"Name of the `<map>` element to associate with this image, prefixed with `#` (e.g. `#nav-map`).
 
-The referenced `<map>` defines clickable regions via `<area>` children."#),
+The referenced `<map>` defines clickable regions via `<area>` children."#));
+add_bool_methods!(HtmlImg,
     ismap(r#"Boolean attribute. When present, the image is a server-side image map: clicks submit the click coordinates as query parameters on the parent `<a>`'s href.
 
 This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#));
@@ -177,15 +178,16 @@ A semicolon-separated list of `feature-name 'src'` (or `feature-name 'src' 'src'
 - `xr-spatial-tracking`
 
 Example: `camera 'self'; microphone https://other.example`."#),
+    csp(r#"Content Security Policy applied to the embedded document.
+
+A Content Security Policy string (the same syntax as an HTTP `Content-Security-Policy` header). The policy is enforced in addition to any other policy the document is delivered with."#));
+add_bool_methods!(HtmlIframe,
     allowfullscreen(r#"Boolean attribute. When present, allows the embedded document to call `requestFullscreen()`.
 
 This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. The Permissions Policy `allow="fullscreen"` attribute is the modern replacement."#),
     credentialless(r#"Boolean attribute. When present, the iframe loads without any user credentials, cookies, or storage sent with requests. The origin is anonymized so it cannot be used to access cross-origin partitioned storage.
 
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
-    csp(r#"Content Security Policy applied to the embedded document.
-
-A Content Security Policy string (the same syntax as an HTTP `Content-Security-Policy` header). The policy is enforced in addition to any other policy the document is delivered with."#));
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#));
 define_html_element!(HtmlEmbed, "embed", all,
     src(r#"URL of the embedded resource.
 
@@ -217,6 +219,24 @@ An alternative to nesting `<source>` elements, which is preferred for serving mu
     poster(r#"URL of an image to display before the video starts playing.
 
 A typical use is a thumbnail or "play" overlay."#),
+    preload(r#"Hint for how aggressively the user agent should preload the media.
+
+One of:
+- `none` (do not preload; the user is not expected to need it)
+- `metadata` (preload only metadata, e.g. duration and dimensions)
+- `auto` (the user agent may preload the whole media)
+
+The attribute is ignored when `autoplay` is present."#),
+    width(r#"Display width in CSS pixels (a valid non-negative integer)."#),
+    height(r#"Display height in CSS pixels (a valid non-negative integer)."#),
+    crossorigin(r#"CORS setting for the video request.
+
+One of:
+- `anonymous`
+- `use-credentials`
+
+Required to use the video with `<canvas>` in a non-CORS-disabled way."#));
+add_bool_methods!(HtmlVideo,
     controls(r#"Boolean attribute. When present, the user agent displays its default media controls (play, pause, volume, fullscreen, etc.).
 
 This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
@@ -229,42 +249,13 @@ This is a boolean attribute. In HTML, presence is sufficient; the value is conve
     muted(r#"Boolean attribute. When present, the audio output is silenced by default.
 
 This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Required for autoplay in many browsers."#),
-    preload(r#"Hint for how aggressively the user agent should preload the media.
-
-One of:
-- `none` (do not preload; the user is not expected to need it)
-- `metadata` (preload only metadata, e.g. duration and dimensions)
-- `auto` (the user agent may preload the whole media)
-
-The attribute is ignored when `autoplay` is present."#),
-    width(r#"Display width in CSS pixels (a valid non-negative integer)."#),
-    height(r#"Display height in CSS pixels (a valid non-negative integer)."#),
     playsinline(r#"Boolean attribute. When present, hints that the video should play inline (within the page) rather than entering the platform's native fullscreen player on iOS.
 
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
-    crossorigin(r#"CORS setting for the video request.
-
-One of:
-- `anonymous`
-- `use-credentials`
-
-Required to use the video with `<canvas>` in a non-CORS-disabled way."#));
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#));
 define_html_element!(HtmlAudio, "audio", all,
     src(r#"URL of the audio to play.
 
 An alternative to nesting `<source>` elements."#),
-    controls(r#"Boolean attribute. When present, the user agent displays its default media controls.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
-    autoplay(r#"Boolean attribute. When present, audio playback begins as soon as it can without stopping.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Many browsers restrict autoplay to muted media or require user activation."#),
-    loop_attr(r#"Boolean attribute. When present, audio automatically seeks back to the start after reaching the end.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
-    muted(r#"Boolean attribute. When present, the audio output is silenced by default.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Required for autoplay in many browsers."#),
     preload(r#"Hint for how aggressively the user agent should preload the media.
 
 One of:
@@ -278,6 +269,19 @@ Ignored when `autoplay` is present."#),
 One of:
 - `anonymous`
 - `use-credentials`"#));
+add_bool_methods!(HtmlAudio,
+    controls(r#"Boolean attribute. When present, the user agent displays its default media controls.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    autoplay(r#"Boolean attribute. When present, audio playback begins as soon as it can without stopping.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Many browsers restrict autoplay to muted media or require user activation."#),
+    loop_attr(r#"Boolean attribute. When present, audio automatically seeks back to the start after reaching the end.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`."#),
+    muted(r#"Boolean attribute. When present, the audio output is silenced by default.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Required for autoplay in many browsers."#));
 define_html_element!(HtmlTrack, "track", aria_hidden_only,
     src(r#"URL of the track file (e.g. a WebVTT `.vtt` file for subtitles or captions)."#),
     kind(r#"Type of text track.
@@ -291,7 +295,8 @@ One of:
     srclang(r#"Language of the track text as a BCP 47 language tag (e.g. `en`, `fr`).
 
 Required when `kind` is `subtitles`."#),
-    label(r#"User-visible title for the track; shown in the user agent's caption picker."#),
+    label(r#"User-visible title for the track; shown in the user agent's caption picker."#));
+add_bool_methods!(HtmlTrack,
     default_attr(r#"Boolean attribute. When present, the track is enabled by default if the user has not chosen another.
 
 This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. Only one `<track>` per media element may have this attribute."#));
@@ -345,9 +350,6 @@ A space-separated list of link types. Common values:
 - `tag`
 
 `noopener` and `noreferrer` are recommended for `target="_blank"`."#),
-    download(r#"If present, the linked resource is downloaded instead of being navigated to. The value, if provided, is the suggested file name.
-
-This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. When a non-empty value is provided, it suggests a default filename for the download."#),
     ping(r#"Space-separated list of URLs to ping with a `POST` request when the link is followed.
 
 Used for click-through tracking. The pings are sent in the background, do not block navigation, and are subject to referrer policy."#),
@@ -365,6 +367,10 @@ One of:
     media(r#"Media query for which the link applies (e.g. `screen`, `print`).
 
 Accepts any valid media query list."#));
+add_bool_methods!(HtmlArea,
+    download(r#"If present, the linked resource is downloaded instead of being navigated to. The value, if provided, is the suggested file name.
+
+This is a boolean attribute. In HTML, presence is sufficient; the value is conventionally an empty string or `"true"`. When a non-empty value is provided, it suggests a default filename for the download."#));
 
 factory!(
     /// Create a new [`HtmlPicture`] element (`<picture>`).
@@ -445,7 +451,14 @@ mod tests {
         assert_eq!(img().srcset("img.webp").render(), r#"<img srcset="img.webp">"#);
         assert_eq!(img().crossorigin("anonymous").render(), r#"<img crossorigin="anonymous">"#);
         assert_eq!(img().usemap("#map").render(), r##"<img usemap="#map">"##);
-        assert_eq!(img().ismap("true").render(), r#"<img ismap="true">"#);
+    }
+
+    #[test]
+    fn img_boolean_attrs_table() {
+        let cases = [("ismap", img().ismap().render(), r#"<img ismap>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
@@ -459,9 +472,18 @@ mod tests {
         assert_eq!(iframe().referrerpolicy("no-referrer").render(), r#"<iframe referrerpolicy="no-referrer"></iframe>"#);
         assert_eq!(iframe().sandbox("allow-scripts").render(), r#"<iframe sandbox="allow-scripts"></iframe>"#);
         assert_eq!(iframe().allow("camera").render(), r#"<iframe allow="camera"></iframe>"#);
-        assert_eq!(iframe().allowfullscreen("true").render(), r#"<iframe allowfullscreen="true"></iframe>"#);
-        assert_eq!(iframe().credentialless("true").render(), r#"<iframe credentialless="true"></iframe>"#);
         assert_eq!(iframe().csp("default-src 'self'").render(), r#"<iframe csp="default-src 'self'"></iframe>"#);
+    }
+
+    #[test]
+    fn iframe_boolean_attrs_table() {
+        let cases = [
+            ("allowfullscreen", iframe().allowfullscreen().render(), r#"<iframe allowfullscreen></iframe>"#),
+            ("credentialless", iframe().credentialless().render(), r#"<iframe credentialless></iframe>"#),
+        ];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
@@ -486,26 +508,44 @@ mod tests {
     fn video_attrs() {
         assert_eq!(video().src("vid.mp4").render(), r#"<video src="vid.mp4"></video>"#);
         assert_eq!(video().poster("thumb.jpg").render(), r#"<video poster="thumb.jpg"></video>"#);
-        assert_eq!(video().controls("true").render(), r#"<video controls="true"></video>"#);
-        assert_eq!(video().autoplay("true").render(), r#"<video autoplay="true"></video>"#);
-        assert_eq!(video().loop_attr("true").render(), r#"<video loop="true"></video>"#);
-        assert_eq!(video().muted("true").render(), r#"<video muted="true"></video>"#);
         assert_eq!(video().preload("auto").render(), r#"<video preload="auto"></video>"#);
         assert_eq!(video().width("640").render(), r#"<video width="640"></video>"#);
         assert_eq!(video().height("480").render(), r#"<video height="480"></video>"#);
-        assert_eq!(video().playsinline("true").render(), r#"<video playsinline="true"></video>"#);
         assert_eq!(video().crossorigin("anonymous").render(), r#"<video crossorigin="anonymous"></video>"#);
+    }
+
+    #[test]
+    fn video_boolean_attrs_table() {
+        let cases = [
+            ("controls", video().controls().render(), r#"<video controls></video>"#),
+            ("autoplay", video().autoplay().render(), r#"<video autoplay></video>"#),
+            ("loop", video().loop_attr().render(), r#"<video loop></video>"#),
+            ("muted", video().muted().render(), r#"<video muted></video>"#),
+            ("playsinline", video().playsinline().render(), r#"<video playsinline></video>"#),
+        ];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
     fn audio_attrs() {
         assert_eq!(audio().src("sound.mp3").render(), r#"<audio src="sound.mp3"></audio>"#);
-        assert_eq!(audio().controls("true").render(), r#"<audio controls="true"></audio>"#);
-        assert_eq!(audio().autoplay("true").render(), r#"<audio autoplay="true"></audio>"#);
-        assert_eq!(audio().loop_attr("true").render(), r#"<audio loop="true"></audio>"#);
-        assert_eq!(audio().muted("true").render(), r#"<audio muted="true"></audio>"#);
         assert_eq!(audio().preload("auto").render(), r#"<audio preload="auto"></audio>"#);
         assert_eq!(audio().crossorigin("anonymous").render(), r#"<audio crossorigin="anonymous"></audio>"#);
+    }
+
+    #[test]
+    fn audio_boolean_attrs_table() {
+        let cases = [
+            ("controls", audio().controls().render(), r#"<audio controls></audio>"#),
+            ("autoplay", audio().autoplay().render(), r#"<audio autoplay></audio>"#),
+            ("loop", audio().loop_attr().render(), r#"<audio loop></audio>"#),
+            ("muted", audio().muted().render(), r#"<audio muted></audio>"#),
+        ];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
@@ -514,7 +554,14 @@ mod tests {
         assert_eq!(track().kind("subtitles").render(), r#"<track kind="subtitles">"#);
         assert_eq!(track().srclang("en").render(), r#"<track srclang="en">"#);
         assert_eq!(track().label("English").render(), r#"<track label="English">"#);
-        assert_eq!(track().default_attr("true").render(), r#"<track default="true">"#);
+    }
+
+    #[test]
+    fn track_boolean_attrs_table() {
+        let cases = [("default", track().default_attr().render(), r#"<track default>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 
     #[test]
@@ -530,9 +577,16 @@ mod tests {
         assert_eq!(area().href("/link").render(), r#"<area href="/link">"#);
         assert_eq!(area().target("_blank").render(), r#"<area target="_blank">"#);
         assert_eq!(area().rel("noopener").render(), r#"<area rel="noopener">"#);
-        assert_eq!(area().download("file.txt").render(), r#"<area download="file.txt">"#);
         assert_eq!(area().ping("/track").render(), r#"<area ping="/track">"#);
         assert_eq!(area().referrerpolicy("no-referrer").render(), r#"<area referrerpolicy="no-referrer">"#);
         assert_eq!(area().media("screen").render(), r#"<area media="screen">"#);
+    }
+
+    #[test]
+    fn area_boolean_attrs_table() {
+        let cases = [("download", area().download().render(), r#"<area download>"#)];
+        for (name, actual, expected) in cases {
+            assert_eq!(actual, expected, "case: {name}");
+        }
     }
 }

@@ -135,6 +135,41 @@ macro_rules! __from_impls {
 }
 pub(crate) use __from_impls;
 
+/// Generates one element-specific boolean attribute setter.
+///
+/// The produced method takes no arguments and appends an
+/// [`AttributeType::Bool`](crate::attributes::AttributeType::Bool)
+/// attribute, rendering as just the attribute name (e.g. `<input disabled>`).
+macro_rules! __emitted_bool_method {
+    ($method:ident, $doc:literal, $attr_name_path:path) => {
+        #[doc = $doc]
+        pub fn $method(self) -> Self {
+            let attr_name = $attr_name_path(stringify!($method));
+            Self(
+                self.0
+                    .append_attrs(vec![crate::attributes::attr(attr_name)]),
+            )
+        }
+    };
+}
+pub(crate) use __emitted_bool_method;
+
+/// Adds no-argument boolean attribute setters to an existing typed element
+/// wrapper. Use after [`define_html_element!`].
+macro_rules! add_bool_methods {
+    ($name:ident, $($method:ident($doc:literal)),+ $(,)?) => {
+        impl $name {
+            $(
+                $crate::html::elements::macros::__emitted_bool_method!(
+                    $method, $doc,
+                    $crate::html::elements::macros::attr_name
+                );
+            )+
+        }
+    };
+}
+pub(crate) use add_bool_methods;
+
 /// Common HTML/SVG global attribute setters.
 macro_rules! __common_globals_methods {
     () => {
